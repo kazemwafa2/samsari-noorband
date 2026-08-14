@@ -1,32 +1,17 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-
-export async function requireAuth(){
-
-  const supabase =
-    await createClient();
-
-
+export async function requireAuth() {
+  const supabase = await createClient();
 
   const {
-    data:{
-      user
-    }
-  } =
-  await supabase.auth.getUser();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-
-
-  if(!user){
-
-    throw new Error(
-      "UNAUTHORIZED"
-    );
-
+  if (error || !user) {
+    redirect("/login");
   }
 
-
-
   return user;
-
 }
