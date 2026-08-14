@@ -97,16 +97,27 @@ export type UserProfile = {
   id: string
 
   full_name?: string
+  surname?: string
   username?: string
 
   email?: string
   phone?: string
+  phone_code?: string
+
+  birth_date?: string
 
   avatar_url?: string
 
   language_id?: string
   currency_id?: string
+
   country_id?: string
+  province_id?: string
+  district_id?: string
+  city_id?: string
+
+  village?: string
+  address?: string
 
   is_verified?: boolean
 }

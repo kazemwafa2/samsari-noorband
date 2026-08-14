@@ -114,15 +114,42 @@ create trigger trg_prevent_self_role_escalation
 create or replace function handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, name, email, phone, role)
+  insert into public.profiles (
+    id,
+    name,
+    full_name,
+    surname,
+    email,
+    phone,
+    phone_code,
+    birth_date,
+    country_id,
+    province_id,
+    district_id,
+    city_id,
+    village,
+    address,
+    role
+  )
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
+    coalesce(new.raw_user_meta_data->>'full_name', ''),
+    coalesce(new.raw_user_meta_data->>'surname', ''),
     new.email,
     coalesce(new.raw_user_meta_data->>'phone', ''),
+    nullif(new.raw_user_meta_data->>'phone_code', ''),
+    nullif(new.raw_user_meta_data->>'birth_date', '')::date,
+    nullif(new.raw_user_meta_data->>'country_id', '')::uuid,
+    nullif(new.raw_user_meta_data->>'province_id', '')::uuid,
+    nullif(new.raw_user_meta_data->>'district_id', '')::uuid,
+    nullif(new.raw_user_meta_data->>'city_id', '')::uuid,
+    coalesce(new.raw_user_meta_data->>'village', ''),
+    nullif(new.raw_user_meta_data->>'address', ''),
     'customer'
   )
   on conflict (id) do nothing;
+
   return new;
 end;
 $$ language plpgsql security definer;
