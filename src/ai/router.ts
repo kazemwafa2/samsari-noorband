@@ -8,11 +8,13 @@ import { orderIntentAI } from "./orders";
 import { getSystemPrompt } from "./systemPrompt";
 import { askGroq } from "@/lib/groq";
 
-type AIRequest = {
+ type AIRequest = {
   message?: string;
   image?: string;
   voice?: File;
   userId?: string;
+  timezone?: string;
+  localHour?: number;
 };
 
 type AIRouterResponse = {
