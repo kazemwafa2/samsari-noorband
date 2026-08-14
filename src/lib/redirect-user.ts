@@ -1,16 +1,12 @@
 export function redirectUser(role: string) {
-  switch (role) {
-    case "SUPER_ADMIN":
+  switch (role.toLowerCase()) {
+    case "super_admin":
+    case "admin":
+    case "seller":
       return "/dashboard";
 
-    case "ADMIN":
-      return "/dashboard";
-
-    case "SELLER":
-      return "/dashboard/seller";
-
-    case "CUSTOMER":
-      return "/profile";
+    case "customer":
+      return "/site/profile";
 
     default:
       return "/";

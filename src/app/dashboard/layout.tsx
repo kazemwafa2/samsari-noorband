@@ -11,7 +11,8 @@ export default async function DashboardLayout({
 
   await requireRole([
     ROLES.ADMIN,
-    ROLES.SUPER_ADMIN
+    ROLES.SUPER_ADMIN,
+    ROLES.SELLER
   ]);
 
 
