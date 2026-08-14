@@ -145,6 +145,73 @@ export default function RegisterPage() {
 
   const [error, setError] = useState("");
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  function setFieldError(field: string, message: string) {
+    setFieldErrors((prev) => ({
+      ...prev,
+      [field]: message,
+    }));
+  }
+
+  function clearFieldError(field: string) {
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function fieldError(field: string) {
+    return fieldErrors[field] ? (
+      <small
+        style={{
+          display: "block",
+          marginTop: 6,
+          color: "#dc2626",
+          fontWeight: 600,
+          lineHeight: 1.6,
+        }}
+      >
+        ⚠️ {fieldErrors[field]}
+      </small>
+    ) : null;
+  }
+
+  function setRegisterServerError(message: string) {
+    const text = message.toLowerCase();
+
+    if (
+      text.includes("email") ||
+      text.includes("ایمیل") ||
+      text.includes("already registered") ||
+      text.includes("already exists")
+    ) {
+      setFieldError("email", message);
+      return;
+    }
+
+    if (
+      text.includes("password") ||
+      text.includes("رمز") ||
+      text.includes("password")
+    ) {
+      setFieldError("password", message);
+      return;
+    }
+
+    if (
+      text.includes("phone") ||
+      text.includes("شماره") ||
+      text.includes("تلفن")
+    ) {
+      setFieldError("phone", message);
+      return;
+    }
+
+    setError(message);
+  }
+
   const passwordStrength = useMemo(
     () => getPasswordStrength(password),
     [password]
@@ -165,12 +232,12 @@ export default function RegisterPage() {
     ];
 
     if (!allowed.includes(file.type)) {
-      setError("فقط تصاویر JPG، PNG، WEBP یا GIF مجاز است.");
+      setFieldError("avatar", "فقط تصاویر JPG، PNG، WEBP یا GIF مجاز است.");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError("حجم عکس نباید بیشتر از ۵ مگابایت باشد.");
+      setFieldError("avatar", "حجم عکس نباید بیشتر از ۵ مگابایت باشد.");
       return;
     }
 
@@ -253,94 +320,103 @@ export default function RegisterPage() {
   ) {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
 
-    if (
-      !name.trim() ||
-      !surname.trim() ||
-      !email.trim() ||
-      !phone.trim() ||
-      !password ||
-      !confirmPassword
-    ) {
-      setError(
-        t("fillAllFieldsRegisterError", language)
-      );
+    if (!name.trim()) {
+      setFieldError("name", "لطفاً نام خود را وارد کنید.");
       return;
     }
 
-    if (!location.countryId) {
-      setError("لطفاً کشور خود را انتخاب کنید.");
-      return;
-    }
-
-    if (!location.provinceId) {
-      setError("لطفاً ولایت / استان خود را انتخاب کنید.");
-      return;
-    }
-
-    if (!location.districtId) {
-      setError("لطفاً ولسوالی / شهرستان خود را انتخاب کنید.");
-      return;
-    }
-
-    if (!village.trim()) {
-      setError("لطفاً نام قریه یا محل خود را وارد کنید.");
+    if (!surname.trim()) {
+      setFieldError("surname", "لطفاً تخلص خود را وارد کنید.");
       return;
     }
 
     if (!validateBirthDate()) {
-      setError(
+      setFieldError(
+        "birthDate",
         "تاریخ تولد معتبر نیست. حداقل سن ثبت‌نام ۱۳ سال است."
       );
       return;
     }
 
-    if (!captchaValid) {
-      setError(
-        t("captchaInvalidError", language)
-      );
+    if (!location.countryId) {
+      setFieldError("country", "لطفاً کشور خود را انتخاب کنید.");
+      return;
+    }
+
+    if (!location.provinceId) {
+      setFieldError("province", "لطفاً ولایت / استان خود را انتخاب کنید.");
+      return;
+    }
+
+    if (!location.districtId) {
+      setFieldError("district", "لطفاً ولسوالی / شهرستان خود را انتخاب کنید.");
+      return;
+    }
+
+    if (!village.trim()) {
+      setFieldError("village", "لطفاً نام قریه یا محل را وارد کنید.");
+      return;
+    }
+
+    if (!email.trim()) {
+      setFieldError("email", "لطفاً ایمیل خود را وارد کنید.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setFieldError("email", "فرمت ایمیل معتبر نیست؛ مانند example@gmail.com وارد کنید.");
+      return;
+    }
+
+    if (!phone.trim()) {
+      setFieldError("phone", "لطفاً شماره تماس خود را وارد کنید.");
+      return;
+    }
+
+    if (!password) {
+      setFieldError("password", "لطفاً رمز عبور خود را وارد کنید.");
       return;
     }
 
     if (password.length < 6 || password.length > 12) {
-      setError(
-        "رمز عبور باید بین ۶ تا ۱۲ کاراکتر باشد."
-      );
+      setFieldError("password", "رمز عبور باید بین ۶ تا ۱۲ کاراکتر باشد.");
       return;
     }
 
     if (!/[A-Z]/.test(password)) {
-      setError(
-        "رمز عبور باید حداقل یک حرف بزرگ انگلیسی داشته باشد."
-      );
+      setFieldError("password", "رمز باید حداقل یک حرف بزرگ انگلیسی داشته باشد.");
       return;
     }
 
     if (!/[a-z]/.test(password)) {
-      setError(
-        "رمز عبور باید حداقل یک حرف کوچک انگلیسی داشته باشد."
-      );
+      setFieldError("password", "رمز باید حداقل یک حرف کوچک انگلیسی داشته باشد.");
       return;
     }
 
     if (!/[0-9]/.test(password)) {
-      setError(
-        "رمز عبور باید حداقل یک عدد داشته باشد."
-      );
+      setFieldError("password", "رمز باید حداقل یک عدد داشته باشد.");
       return;
     }
 
     if (!/[^A-Za-z0-9]/.test(password)) {
-      setError(
-        "رمز عبور باید حداقل یک کاراکتر ویژه مانند @ یا # داشته باشد."
-      );
+      setFieldError("password", "رمز باید حداقل یک کاراکتر ویژه مانند @ یا # داشته باشد.");
+      return;
+    }
+
+    if (!confirmPassword) {
+      setFieldError("confirmPassword", "لطفاً رمز عبور را دوباره وارد کنید.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(
-        t("passwordsMismatchError", language)
-      );
+      setFieldError("confirmPassword", "رمز عبور و تأیید رمز یکسان نیستند.");
+      return;
+    }
+
+    if (!captchaValid) {
+      setFieldError("captcha", t("captchaInvalidError", language));
       return;
     }
 
@@ -377,9 +453,12 @@ export default function RegisterPage() {
 
     if (signUpError) {
       setLoading(false);
-      setError(
-        translateAuthError(signUpError.message)
+
+      const translatedError = translateAuthError(
+        signUpError.message
       );
+
+      setRegisterServerError(translatedError);
       return;
     }
 
@@ -590,6 +669,8 @@ export default function RegisterPage() {
                 عکس پروفایل
               </span>
 
+              {fieldError("avatar")}
+
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
@@ -610,12 +691,14 @@ export default function RegisterPage() {
                 type="text"
                 placeholder="نام شما"
                 value={name}
-                onChange={(e) =>
-                  setName(e.target.value)
-                }
+                onChange={(e) => {
+                  setName(e.target.value);
+                  clearFieldError("name");
+                }}
                 required
               />
             </div>
+            {fieldError("name")}
           </div>
 
           <br />
@@ -631,12 +714,14 @@ export default function RegisterPage() {
                 type="text"
                 placeholder="تخلص شما"
                 value={surname}
-                onChange={(e) =>
-                  setSurname(e.target.value)
-                }
+                onChange={(e) => {
+                  setSurname(e.target.value);
+                  clearFieldError("surname");
+                }}
                 required
               />
             </div>
+            {fieldError("surname")}
           </div>
 
           <br />
@@ -651,14 +736,14 @@ export default function RegisterPage() {
               <input
                 type="date"
                 value={birthDate}
-                onChange={(e) =>
-                  setBirthDate(e.target.value)
-                }
-                max={
-                  new Date().toISOString().split("T")[0]
-                }
+                onChange={(e) => {
+                  setBirthDate(e.target.value);
+                  clearFieldError("birthDate");
+                }}
+                max={new Date().toISOString().split("T")[0]}
               />
             </div>
+            {fieldError("birthDate")}
           </div>
 
           <br />
@@ -690,6 +775,9 @@ export default function RegisterPage() {
                 city: "ناحیه / شهر",
               }}
             />
+            {fieldError("country")}
+            {fieldError("province")}
+            {fieldError("district")}
           </div>
 
           <br />
@@ -705,12 +793,14 @@ export default function RegisterPage() {
                 type="text"
                 placeholder="نام قریه یا محل"
                 value={village}
-                onChange={(e) =>
-                  setVillage(e.target.value)
-                }
+                onChange={(e) => {
+                  setVillage(e.target.value);
+                  clearFieldError("village");
+                }}
                 required
               />
             </div>
+            {fieldError("village")}
           </div>
 
           <br />
@@ -746,12 +836,14 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="example@gmail.com"
                 value={email}
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  clearFieldError("email");
+                }}
                 required
               />
             </div>
+            {fieldError("email")}
           </div>
 
           <br />
@@ -803,12 +895,14 @@ export default function RegisterPage() {
                 type="tel"
                 placeholder="07xxxxxxxx"
                 value={phone}
-                onChange={(e) =>
-                  setPhone(e.target.value)
-                }
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  clearFieldError("phone");
+                }}
                 required
               />
             </div>
+            {fieldError("phone")}
 
             <small
               style={{
@@ -840,9 +934,10 @@ export default function RegisterPage() {
                 placeholder="رمز قوی خود را وارد کنید"
                 value={password}
                 maxLength={12}
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  clearFieldError("password");
+                }}
                 required
               />
 
@@ -896,15 +991,22 @@ export default function RegisterPage() {
                   style={{
                     width: `${Math.min(
                       100,
-                      (passwordStrength.score / 6) *
-                        100
+                      (passwordStrength.score / 6) * 100
                     )}%`,
                     height: "100%",
-                    transition: "width .2s",
+                    transition: "width .2s, background .2s",
+                    background:
+                      passwordStrength.score <= 2
+                        ? "#dc2626"
+                        : passwordStrength.score <= 4
+                        ? "#f59e0b"
+                        : "#16a34a",
                   }}
                 />
               </div>
             </div>
+
+            {fieldError("password")}
 
             <button
               type="button"
@@ -957,11 +1059,10 @@ export default function RegisterPage() {
                 placeholder="رمز عبور را دوباره وارد کنید"
                 value={confirmPassword}
                 maxLength={12}
-                onChange={(e) =>
-                  setConfirmPassword(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  clearFieldError("confirmPassword");
+                }}
                 required
               />
 
@@ -981,14 +1082,19 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+            {fieldError("confirmPassword")}
           </div>
 
           <br />
 
           {/* CAPTCHA */}
           <Captcha
-            onValidChange={setCaptchaValid}
+            onValidChange={(valid) => {
+              setCaptchaValid(valid);
+              clearFieldError("captcha");
+            }}
           />
+          {fieldError("captcha")}
 
           <br />
 
