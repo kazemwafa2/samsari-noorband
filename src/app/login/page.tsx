@@ -197,9 +197,29 @@ export default function LoginPage() {
 
           <br />
 
-          <div className="flex">
-            <Link href="/forgot-password">{t("forgotPasswordLink", language)}</Link>
-            <Link href="/register">{t("registerLink", language)}</Link>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            <Link href="/forgot-password">
+              {t("forgotPasswordLink", language)}
+            </Link>
+
+            <Link
+              href="/register"
+              style={{
+                fontWeight: 700,
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+            >
+              {t("registerLink", language)}
+            </Link>
           </div>
 
           <br />
