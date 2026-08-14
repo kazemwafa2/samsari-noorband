@@ -139,13 +139,13 @@ export default function ChatBot() {
           message: userText,
           image: selectedImage,
 
-          // اطلاعات زمان محلی کاربر
-          timezone,
-          localHour,
+          // زمان و منطقه زمانی واقعی دستگاه کاربر
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          localHour: new Date().getHours(),
 
-          // زبان رابط کاربر
-          interfaceLanguage: language,
-        }),
+  // زبان رابط کاربر
+  interfaceLanguage: language,
+}),
       });
 
       const result = await response.json();

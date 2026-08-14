@@ -38,6 +38,8 @@ export async function aiRouter({
   image,
   voice,
   userId,
+  timezone,
+  localHour,
 }: AIRequest): Promise<AIRouterResponse> {
   const language = detectLanguage(message);
 
@@ -155,7 +157,13 @@ export async function aiRouter({
     // استفاده می‌شود تا پاسخ واقعا به پیام کاربر مرتبط باشد.
     //====================
 
-    const groq = await askGroq(message, getSystemPrompt(language));
+    const groq = await askGroq(
+      message,
+      getSystemPrompt(language, {
+        timezone,
+        localHour,
+      })
+    );
     const groqText = groq?.choices?.[0]?.message?.content;
 
     return {
