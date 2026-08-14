@@ -5003,7 +5003,7 @@ Danke für deine wertvolle Unterstützung.
 `,
   },
 
-  NOORBAND Jaghori_FAMILY_MESSAGE: {
+  NOORBAND_Jaghori_FAMILY_MESSAGE: {
     fa: `
 💜 شما تنها یک مشتری نیستید.
 
