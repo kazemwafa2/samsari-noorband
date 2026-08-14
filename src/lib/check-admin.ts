@@ -48,7 +48,7 @@ return false;
 
 
 
-return data.role === "admin";
+return ["super_admin", "admin", "seller"].includes(data.role);
 
 
 }
