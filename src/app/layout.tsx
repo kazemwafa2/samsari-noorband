@@ -116,6 +116,7 @@ export default function RootLayout({
   return (
     <html lang="prs" dir="rtl">
       <body>
+        <LanguageProvider>
         <RegisterSW />
         <Analytics />
         <OfflineBanner />
@@ -148,7 +149,6 @@ export default function RootLayout({
             هیچ‌جای اپلیکیشن وصل نبودند (هیچ صفحه‌ای نمی‌توانست از
             useLanguage/useCurrency استفاده کند چون Provider والدشان
             نبود). حالا کل اپ در این دو Provider پیچیده شده است. */}
-        <LanguageProvider>
           <ThemeProvider>
             <CurrencyProvider>
               <SiteSettingsProvider>
