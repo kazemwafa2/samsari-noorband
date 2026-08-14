@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/client";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+
+interface Category {
+  id: number;
+  title: string;
+  slug: string;
+}
 
 export default function CreateProduct() {
   const supabase = createClient();
@@ -13,48 +18,84 @@ export default function CreateProduct() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
-  const [category, setCategory] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [description, setDescription] = useState("");
   const [discount, setDiscount] = useState("0");
   const [image, setImage] = useState("");
-  const [specs, setSpecs] = useState<{ key: string; value: string }[]>([{ key: "", value: "" }]);
+  const [specs, setSpecs] = useState<{ key: string; value: string }[]>([
+    { key: "", value: "" },
+  ]);
   const [loading, setLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
 
-  // شناسه کاربر را زودتر (قبل از submit) لازم داریم چون به آن برای
-  // مسیر آپلود عکس هم نیاز است — Policy جدید باکت images برای seller
-  // فقط مسیر products/{uid}/... خودش را قبول می‌کند.
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    async function load() {
+      const [{ data: userData }, { data: categoryData, error: categoryError }] =
+        await Promise.all([
+          supabase.auth.getUser(),
+          supabase
+            .from("categories")
+            .select("id, title, slug")
+            .order("title"),
+        ]);
+
+      setUserId(userData.user?.id ?? null);
+      setCategories(categoryData || []);
+
+      if (categoryError) {
+        setError(
+          "دریافت دسته‌بندی‌ها با خطا مواجه شد: " +
+            categoryError.message
+        );
+      }
+
+      setCategoriesLoading(false);
+    }
+
+    load();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    if (!title || !price || !stock) {
+    if (!title.trim() || !price || !stock) {
       setError("عنوان، قیمت و موجودی الزامی هستند.");
+      return;
+    }
+
+    if (!categoryId) {
+      setError("لطفاً یک دسته‌بندی انتخاب کنید.");
+      return;
+    }
+
+    const selectedCategory = categories.find(
+      (category) => String(category.id) === categoryId
+    );
+
+    if (!selectedCategory) {
+      setError("دسته‌بندی انتخاب‌شده معتبر نیست.");
       return;
     }
 
     setLoading(true);
 
-    // مشخصات فنی (برند، حجم، مناسب برای و...) به‌صورت جفت کلید-مقدار
-    // — چک‌لیست: جدول «مشخصات» در تب صفحه محصول که قبلا وجود نداشت.
     const specifications = Object.fromEntries(
-      specs.filter((s) => s.key.trim() && s.value.trim()).map((s) => [s.key.trim(), s.value.trim()])
+      specs
+        .filter((s) => s.key.trim() && s.value.trim())
+        .map((s) => [s.key.trim(), s.value.trim()])
     );
 
-    // seller_id باید ست شود چون Policy جدید در دیتابیس (seller فقط
-    // محصول خودش را می‌تواند بسازد/ویرایش/حذف کند) دقیقا همین ستون را
-    // چک می‌کند؛ بدون این، INSERT برای نقش seller با خطای RLS رد می‌شود.
     const { error: insertError } = await supabase.from("products").insert({
-      title,
+      title: title.trim(),
       price: Number(price),
       stock: Number(stock),
-      category,
-      description,
+      category_id: Number(selectedCategory.id),
+      category: selectedCategory.title,
+      description: description.trim(),
       discount: Number(discount) || 0,
       image,
       specifications,
@@ -81,13 +122,18 @@ export default function CreateProduct() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label>عنوان محصول</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
         </div>
 
         <div>
           <label>قیمت (افغانی)</label>
           <input
             type="number"
+            min="0"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             required
@@ -98,6 +144,7 @@ export default function CreateProduct() {
           <label>موجودی</label>
           <input
             type="number"
+            min="0"
             value={stock}
             onChange={(e) => setStock(e.target.value)}
             required
@@ -108,6 +155,8 @@ export default function CreateProduct() {
           <label>درصد تخفیف</label>
           <input
             type="number"
+            min="0"
+            max="100"
             value={discount}
             onChange={(e) => setDiscount(e.target.value)}
           />
@@ -115,12 +164,40 @@ export default function CreateProduct() {
 
         <div>
           <label>دسته‌بندی</label>
-          <input value={category} onChange={(e) => setCategory(e.target.value)} />
+
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            required
+            disabled={categoriesLoading}
+          >
+            <option value="">
+              {categoriesLoading
+                ? "در حال بارگذاری دسته‌بندی‌ها..."
+                : "انتخاب دسته‌بندی"}
+            </option>
+
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.title}
+              </option>
+            ))}
+          </select>
+
+          {!categoriesLoading && categories.length === 0 && (
+            <p style={{ color: "red", marginTop: 6 }}>
+              هیچ دسته‌بندی‌ای ثبت نشده است.
+            </p>
+          )}
         </div>
 
         <div>
           <label>تصویر اصلی محصول</label>
-          <ImageUploader value={image} onUploaded={setImage} folder={`products/${userId ?? "shared"}`} />
+          <ImageUploader
+            value={image}
+            onUploaded={setImage}
+            folder={`products/${userId ?? "shared"}`}
+          />
         </div>
 
         <div>
@@ -131,35 +208,47 @@ export default function CreateProduct() {
           />
         </div>
 
-        {/* مشخصات فنی — جفت‌های کلید/مقدار قابل‌افزودن، دقیقا مثل
-            «برند / حجم / مناسب برای / نوع رایحه» در طرح مرجع */}
         <div>
-          <label>مشخصات فنی (مثلا برند، حجم، ساخت کشور)</label>
+          <label>مشخصات فنی</label>
 
           {specs.map((s, i) => (
-            <div key={i} className="flex" style={{ gap: 8, marginBottom: 8 }}>
+            <div
+              key={i}
+              className="flex"
+              style={{ gap: 8, marginBottom: 8 }}
+            >
               <input
                 placeholder="عنوان (مثلا برند)"
                 value={s.key}
                 onChange={(e) => {
                   const next = [...specs];
-                  next[i] = { ...next[i], key: e.target.value };
+                  next[i] = {
+                    ...next[i],
+                    key: e.target.value,
+                  };
                   setSpecs(next);
                 }}
               />
+
               <input
                 placeholder="مقدار (مثلا Chanel)"
                 value={s.value}
                 onChange={(e) => {
                   const next = [...specs];
-                  next[i] = { ...next[i], value: e.target.value };
+                  next[i] = {
+                    ...next[i],
+                    value: e.target.value,
+                  };
                   setSpecs(next);
                 }}
               />
+
               <button
                 type="button"
                 className="icon-btn"
-                onClick={() => setSpecs(specs.filter((_, idx) => idx !== i))}
+                onClick={() =>
+                  setSpecs(specs.filter((_, idx) => idx !== i))
+                }
               >
                 ✕
               </button>
@@ -169,13 +258,19 @@ export default function CreateProduct() {
           <button
             type="button"
             className="outline-btn"
-            onClick={() => setSpecs([...specs, { key: "", value: "" }])}
+            onClick={() =>
+              setSpecs([...specs, { key: "", value: "" }])
+            }
           >
             ➕ افزودن ردیف مشخصات
           </button>
         </div>
 
-        <button className="primary-btn" type="submit" disabled={loading}>
+        <button
+          className="primary-btn"
+          type="submit"
+          disabled={loading || categories.length === 0}
+        >
           {loading ? "در حال ثبت..." : "ثبت محصول"}
         </button>
       </form>
