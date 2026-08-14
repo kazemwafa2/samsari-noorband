@@ -29,7 +29,7 @@ import type { Language } from "@/lib/i18n/dictionaries";
 
 export type SeasonalMessage = { key: string; text: string } | null;
 
-function getSeasonKey(month: number): string {
+function getSeasonKey(month: number): "SPRING_MESSAGE" | "SUMMER_MESSAGE" | "AUTUMN_MESSAGE" | "WINTER_MESSAGE" {
   // فصل‌های میلادی نجومی/هواشناسی — افغانستان در نیم‌کره شمالی است.
   if (month >= 3 && month <= 5) return "SPRING_MESSAGE";
   if (month >= 6 && month <= 8) return "SUMMER_MESSAGE";
