@@ -3631,3 +3631,243 @@ label{
 @media (prefers-reduced-motion: reduce){
   .auth-page-decor span{ animation:none; }
 }
+
+/* =========================================================
+   FINAL MOBILE HOME UI FIX
+   Floating Actions + Footer + Hero
+   ========================================================= */
+
+/* ---------- Floating action buttons ---------- */
+
+.floating-ai,
+.floating-whatsapp,
+.floating-call,
+.floating-scroll-top {
+  position: fixed;
+  z-index: 9999;
+}
+
+/* Desktop */
+.floating-ai {
+  right: 20px;
+  bottom: 25px;
+}
+
+.floating-scroll-top {
+  right: 20px;
+  bottom: 105px;
+}
+
+.floating-whatsapp {
+  left: 20px;
+  bottom: 25px;
+}
+
+.floating-call {
+  left: 20px;
+  bottom: 105px;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 768px) {
+
+  /*
+   * فضای پایین:
+   * نوار موبایل + فاصله امن + دکمه‌ها
+   *
+   * دکمه‌ها دیگر روی هم قرار نمی‌گیرند.
+   */
+
+  .floating-ai {
+    right: 16px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    width: 58px;
+    height: 58px;
+  }
+
+  .floating-scroll-top {
+    right: 16px;
+    bottom: calc(146px + env(safe-area-inset-bottom));
+    width: 48px;
+    height: 48px;
+  }
+
+  .floating-whatsapp {
+    left: 16px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+  }
+
+  .floating-call {
+    left: 16px;
+    bottom: calc(146px + env(safe-area-inset-bottom));
+    width: 48px;
+    height: 48px;
+  }
+
+  /* جلوگیری از کوچک شدن یا جابه‌جایی ناخواسته */
+  .floating-ai,
+  .floating-whatsapp,
+  .floating-call,
+  .floating-scroll-top {
+    flex-shrink: 0;
+  }
+
+
+  /* ---------- Footer mobile ---------- */
+
+  footer.footer {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 40px;
+    padding: 32px 16px calc(110px + env(safe-area-inset-bottom));
+    overflow:hidden;
+  }
+
+  .footer-brand {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .footer-brand h2 {
+    margin: 0;
+    font-size: 20px;
+  }
+
+  .footer-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin: 18px 0 24px;
+  }
+
+  .footer-store-img {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 14px;
+    margin-bottom: 4px;
+  }
+
+  .footer-banner-item {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    text-align: start;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(139, 92, 246, 0.06);
+    line-height: 1.8;
+  }
+
+  .footer-columns {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    gap: 26px;
+    margin: 24px 0;
+    text-align: start;
+  }
+
+  .footer-col {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .footer-col h3 {
+    margin: 0 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--glass-border);
+    text-align: start;
+  }
+
+  .footer-link-row {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    text-align: start;
+    padding: 7px 0;
+    line-height: 1.7;
+  }
+
+  .footer-link-row a {
+    overflow-wrap: anywhere;
+  }
+
+  .footer-social-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .footer > p {
+    margin: 10px 0;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+
+  /* ---------- Hero mobile ---------- */
+
+  .hero-slider {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .hero-slide {
+    width: 100%;
+    min-width: 0;
+    gap: 0;
+  }
+
+  .hero-slide-visual {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    order: -1;
+  }
+
+  .hero-slide-photo {
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    min-height: 220px;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .hero-slide-text {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 22px 18px 28px;
+  }
+
+  .hero-slide-text p {
+    max-width: none;
+  }
+
+  /*
+   * فلش‌ها داخل خود بنر بمانند و روی تصویر
+   * یا متن ایجاد مزاحمت نکنند.
+   */
+  .hero-arrow {
+    z-index: 5;
+  }
+
+  .hero-dots {
+    z-index: 6;
+    bottom: 10px;
+  }
+}

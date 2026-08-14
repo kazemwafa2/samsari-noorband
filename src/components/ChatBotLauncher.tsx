@@ -64,11 +64,11 @@ export default function ChatBotLauncher() {
     <div
       style={{
         position: "fixed",
-        bottom: 25,
-        right: 20,
-        zIndex: 999,
-        width: "min(360px, calc(100vw - 40px))",
-        maxHeight: "min(560px, calc(100vh - 100px))",
+        bottom: "calc(90px + env(safe-area-inset-bottom))",
+        right: 16,
+        zIndex: 9999,
+        width: "min(360px, calc(100vw - 32px))",
+        maxHeight: "min(560px, calc(100vh - 120px))",
         overflowY: "auto",
       }}
     >
