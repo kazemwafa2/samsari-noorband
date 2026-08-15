@@ -113,47 +113,37 @@ export default function LoginPage() {
     localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
 
     try {
-      const supabase = createClient();
-
-      const { data, error: loginError } =
-        await supabase.auth.signInWithPassword({
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
           email,
           password,
-        });
+        }),
+      });
 
-      if (loginError || !data.user) {
-        setLoading(false);
+      const result = await response.json();
 
-        if (
-          loginError?.message?.toLowerCase().includes("too many") ||
-          loginError?.message?.includes("تلاش")
-        ) {
+      setLoading(false);
+
+      if (!result.success) {
+        if (response.status === 429) {
           setLockRemaining(LOCKOUT_WINDOW_SECONDS);
         }
 
         setError(
           translateAuthError(
-            loginError?.message || "ورود انجام نشد."
+            result.error || "ورود انجام نشد."
           )
         );
         return;
       }
 
-      const { data: profile, error: profileError } =
-        await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .maybeSingle();
-
-      setLoading(false);
-
-      if (profileError) {
-        console.error("LOGIN_PROFILE_ERROR:", profileError);
-      }
-
       const userRole = String(
-        profile?.role || "customer"
+        result.role || "customer"
       ).trim().toLowerCase();
 
       const isDashboardUser =
@@ -161,7 +151,9 @@ export default function LoginPage() {
         userRole === "super_admin" ||
         userRole === "seller";
 
-      const target = isDashboardUser ? "/dashboard" : redirectTo;
+      const target = isDashboardUser
+        ? "/dashboard"
+        : redirectTo;
 
       toast.success(
         getMessage("LOGIN_MESSAGE", language)
