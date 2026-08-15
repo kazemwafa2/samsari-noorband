@@ -432,6 +432,7 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             full_name: name.trim(),
             surname: surname.trim(),
