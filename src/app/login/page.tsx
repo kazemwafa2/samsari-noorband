@@ -112,46 +112,70 @@ export default function LoginPage() {
     setLoading(true);
     localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
 
-    const response = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const supabase = createClient();
 
-    const result = await response.json();
+      const { data, error: loginError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-    setLoading(false);
+      if (loginError || !data.user) {
+        setLoading(false);
 
-    if (!result.success) {
-      if (response.status === 429) {
-        setLockRemaining(LOCKOUT_WINDOW_SECONDS);
+        if (
+          loginError?.message?.toLowerCase().includes("too many") ||
+          loginError?.message?.includes("تلاش")
+        ) {
+          setLockRemaining(LOCKOUT_WINDOW_SECONDS);
+        }
+
+        setError(
+          translateAuthError(
+            loginError?.message || "ورود انجام نشد."
+          )
+        );
+        return;
       }
-      setError(
-        result.error?.includes("تلاش") ? result.error : translateAuthError(result.error)
+
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+      setLoading(false);
+
+      if (profileError) {
+        console.error("LOGIN_PROFILE_ERROR:", profileError);
+      }
+
+      const userRole = String(
+        profile?.role || "customer"
+      ).trim().toLowerCase();
+
+      const isDashboardUser =
+        userRole === "admin" ||
+        userRole === "super_admin" ||
+        userRole === "seller";
+
+      const target = isDashboardUser ? "/dashboard" : redirectTo;
+
+      toast.success(
+        getMessage("LOGIN_MESSAGE", language)
       );
-      return;
+
+      router.replace(target);
+      router.refresh();
+    } catch (error) {
+      console.error("LOGIN_ERROR:", error);
+      setLoading(false);
+      setError(
+        "خطایی در ورود رخ داد. لطفاً دوباره تلاش کنید."
+      );
     }
-
-    // قبلا همه کاربران بعد از ورود، صرف‌نظر از نقش، به همان صفحه قبلی یا
-    // «/» می‌رفتند — یعنی ادمین/مدیرکل هم باید دستی به /dashboard می‌رفت.
-    // حالا اگر نقش کاربر admin/super_admin باشد و آدرس redirect خاصی هم
-    // در URL خواسته نشده باشد، مستقیم به پنل مدیریت هدایت می‌شود.
-    const userRole = String(result.role || "").trim().toLowerCase();
-
-    const isDashboardUser =
-      userRole === "admin" ||
-      userRole === "super_admin" ||
-      userRole === "seller";
-
-    const target = isDashboardUser ? "/dashboard" : redirectTo;
-
-    // LOGIN_MESSAGE در messages.ts از قبل تعریف شده بود ولی هیچ‌جای کد
-    // صدایش نمی‌زد — یعنی بعد از ورود موفق هیچ پیام خوش‌آمدی دیده
-    // نمی‌شد. حالا همین لحظه نشان داده می‌شود.
-    toast.success(getMessage("LOGIN_MESSAGE", language));
-
-    router.push(target);
-    router.refresh();
   }
 
   // ورود با گوگل/گیت‌هاب — واقعا کار می‌کند به شرطی که در Supabase Dashboard
