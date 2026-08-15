@@ -27,7 +27,7 @@ export default function Profile() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, email, phone, avatar, vip, premium, role, is_active, created_at")
+      .select("full_name, surname, email, phone, avatar, vip, premium, role, is_active, created_at")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -101,6 +101,7 @@ export default function Profile() {
         <h2>{t("welcomeFamilyTitle", language)}</h2>
 
         <p>{t("nameLabel", language)}: {profile.full_name || t("notRegisteredText", language)}</p>
+        <p>تخلص: {profile.surname || t("notRegisteredText", language)}</p>
         <p>{t("emailLabel", language)}: {profile.email}</p>
         <p>{t("phoneNumberLabel", language)}: {profile.phone || t("notRegisteredText", language)}</p>
         <p>{t("accountLevelLabel", language)}: {profile.role}</p>

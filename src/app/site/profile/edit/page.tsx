@@ -34,6 +34,7 @@ const [form,setForm] =
 useState({
 
 full_name:"",
+surname:"",
 phone:"",
 avatar:""
 
@@ -82,6 +83,7 @@ await supabase
 .select(
 `
 full_name,
+surname,
 phone,
 avatar
 `
@@ -104,6 +106,9 @@ setForm({
 
 full_name:
 data.full_name || "",
+
+surname:
+data.surname || "",
 
 phone:
 data.phone || "",
@@ -172,6 +177,9 @@ await supabase
 
 full_name:
 form.full_name,
+
+surname:
+form.surname,
 
 phone:
 form.phone,
@@ -282,6 +290,35 @@ e.target.value
 
 
 
+
+
+<label>
+تخلص
+</label>
+
+<input
+
+className="input"
+
+value={
+form.surname
+}
+
+onChange={
+e=>
+
+setForm({
+
+...form,
+
+surname:
+e.target.value
+
+})
+
+}
+
+/>
 
 
 <label>
