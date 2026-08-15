@@ -3838,14 +3838,16 @@ label{
 
   .hero-slide-photo {
     display: block;
-    width: 100%;
-    max-width: none;
+    width: 100vw;
+    max-width: 100vw;
     height: auto;
     min-height: 220px;
     aspect-ratio: 16 / 9;
     object-fit: cover;
     border-radius: 0;
     box-shadow: none;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
   }
 
   .hero-slide-text {
