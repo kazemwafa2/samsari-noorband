@@ -4412,3 +4412,14 @@ label{
   }
 
 }
+
+/* Mobile navbar burger: keep the original menu button visible */
+@media(max-width:900px){
+  .navbar-burger{
+    display:flex;
+    flex:0 0 40px;
+    min-width:40px;
+    width:40px;
+    height:40px;
+  }
+}
