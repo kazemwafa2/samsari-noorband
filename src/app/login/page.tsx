@@ -167,8 +167,7 @@ export default function LoginPage() {
         getMessage("LOGIN_MESSAGE", language)
       );
 
-      router.replace(target);
-      router.refresh();
+      window.location.assign(target);
     } catch (error) {
       console.error("LOGIN_ERROR:", error);
       setLoading(false);
