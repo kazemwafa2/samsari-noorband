@@ -136,15 +136,14 @@ export default function LoginPage() {
     // «/» می‌رفتند — یعنی ادمین/مدیرکل هم باید دستی به /dashboard می‌رفت.
     // حالا اگر نقش کاربر admin/super_admin باشد و آدرس redirect خاصی هم
     // در URL خواسته نشده باشد، مستقیم به پنل مدیریت هدایت می‌شود.
-    const isDashboardUser =
-      result.role === "admin" ||
-      result.role === "super_admin" ||
-      result.role === "seller";
+    const userRole = String(result.role || "").trim().toLowerCase();
 
-    const target =
-      isDashboardUser && !searchParams.get("redirect")
-        ? "/dashboard"
-        : redirectTo;
+    const isDashboardUser =
+      userRole === "admin" ||
+      userRole === "super_admin" ||
+      userRole === "seller";
+
+    const target = isDashboardUser ? "/dashboard" : redirectTo;
 
     // LOGIN_MESSAGE در messages.ts از قبل تعریف شده بود ولی هیچ‌جای کد
     // صدایش نمی‌زد — یعنی بعد از ورود موفق هیچ پیام خوش‌آمدی دیده
