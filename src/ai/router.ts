@@ -2,11 +2,11 @@ import { searchProductsAI } from "./search";
 import { recommendAI } from "./recommend";
 import { imageAI } from "./image";
 import { voiceAI } from "./voice";
-import { detectLanguage } from "./detectLanguage";
+import { detectLanguage, isSupportedLanguage, type SupportedLanguage } from "./detectLanguage";
 import { getPersonality } from "./personality";
 import { orderIntentAI } from "./orders";
 import { getSystemPrompt } from "./systemPrompt";
-import { askGroq } from "@/lib/groq";
+import { askGroq, type GroqHistoryTurn } from "@/lib/groq";
 
  type AIRequest = {
   message?: string;
@@ -15,6 +15,13 @@ import { askGroq } from "@/lib/groq";
   userId?: string;
   timezone?: string;
   localHour?: number;
+  // زبانی که خود سایت (middleware/جغرافیا/انتخاب صریح کاربر در
+  // LanguageProvider) از قبل برای این کاربر تشخیص داده — قبلا این
+  // مقدار از فرانت‌اند فرستاده می‌شد ولی اینجا اصلا خوانده نمی‌شد.
+  interfaceLanguage?: string;
+  // چند پیام آخر مکالمه، برای اینکه Groq جواب مرتبط با ادامه‌ی گفتگو
+  // بدهد، نه هر بار از صفر.
+  history?: GroqHistoryTurn[];
 };
 
 type AIRouterResponse = {
@@ -40,8 +47,19 @@ export async function aiRouter({
   userId,
   timezone,
   localHour,
+  interfaceLanguage,
+  history = [],
 }: AIRequest): Promise<AIRouterResponse> {
-  const language = detectLanguage(message);
+  // قانون زبان: زبان همان پیام فعلی (اگر با اطمینان از روی متن قابل
+  // تشخیص باشد) اولویت دارد؛ چون طبق قانون ۳ سیستم‌پرامپت، اگر کاربر
+  // وسط گفتگو زبانش را عوض کرد، پاسخ هم باید عوض شود. اما وقتی پیام
+  // فاقد نشانه‌ی زبانی مشخص است (سلام‌های کوتاه، پیام خالی، و...)،
+  // به‌جای پیش‌فرض کورکورانه‌ی «دری»، همان زبانی که خود سایت از قبل
+  // برای این کاربر تشخیص داده (interfaceLanguage) استفاده می‌شود —
+  // این همان چیزی است که قبلا اصلا به aiRouter نمی‌رسید.
+  const language: SupportedLanguage =
+    detectLanguage(message) ??
+    (isSupportedLanguage(interfaceLanguage) ? interfaceLanguage : "prs");
 
   try {
     const lowerMessage = message.toLowerCase();
@@ -162,7 +180,8 @@ export async function aiRouter({
       getSystemPrompt(language, {
         timezone,
         localHour,
-      })
+      }),
+      history
     );
     const groqText = groq?.choices?.[0]?.message?.content;
 

@@ -14,6 +14,26 @@ export async function POST(request: Request) {
         ? body.localHour
         : new Date().getHours();
 
+    // زبانی که خود سایت (middleware + LanguageProvider، بر اساس
+    // جغرافیا/URL/انتخاب کاربر) از قبل تشخیص داده بود؛ قبلا فرانت‌اند
+    // این را می‌فرستاد (ChatBot.tsx) ولی این‌جا هیچ‌وقت خوانده نمی‌شد.
+    const interfaceLanguage =
+      typeof body.interfaceLanguage === "string"
+        ? body.interfaceLanguage
+        : undefined;
+
+    // چند پیام آخر مکالمه (برای پیوستگی پاسخ Groq در ادامه‌ی گفتگو).
+    const history = Array.isArray(body.history)
+      ? body.history
+          .filter(
+            (item: any) =>
+              item &&
+              (item.role === "user" || item.role === "assistant") &&
+              typeof item.content === "string"
+          )
+          .slice(-10)
+      : [];
+
     if (!message && !image) {
       return NextResponse.json(
         { success: false, error: "Message is required" },
@@ -67,6 +87,8 @@ export async function POST(request: Request) {
       userId: user?.id,
       timezone,
       localHour,
+      interfaceLanguage,
+      history,
     });
 
     return NextResponse.json({

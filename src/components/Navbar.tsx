@@ -3,17 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  Gem,
-  Search,
-  Heart,
-  ShoppingBag,
-  User,
-  Bell,
-  Menu,
-  X,
-  ShieldCheck,
-} from "lucide-react";
+import { Gem, Search, Heart, ShoppingBag, User, Bell, Menu, X } from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { CurrencySwitcher } from "@/components/shared/CurrencySwitcher";
@@ -23,8 +13,10 @@ import { useCartStore } from "@/store/cart";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { t } from "@/lib/i18n/dictionaries";
 import { useSiteSettings } from "@/lib/site-settings";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { useCurrency } from "@/lib/currency";
+import { useUserRole } from "@/hooks/use-user-role";
+import { redirectUser } from "@/lib/redirect-user";
 
 // نسخه قبلی این کامپوننت فقط چند ایموجی خام (🏠 🛍 🔎 🛒 🔔 👤) بدون
 // لوگو، بدون جستجو و بدون اتصال واقعی به سبد خرید/علاقه‌مندی‌ها بود.
@@ -38,60 +30,17 @@ export default function Navbar() {
   const { language } = useLanguage();
   const { logoUrl } = useSiteSettings();
   const { format } = useCurrency();
+  const supabase = createClient();
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const [userRole, setUserRole] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadUserRole() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!mounted) return;
-
-      if (!user) {
-        setUserRole(null);
-        return;
-      }
-
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!mounted) return;
-
-      if (error || !profile) {
-        setUserRole(null);
-        return;
-      }
-
-      setUserRole(String(profile.role || "").trim().toLowerCase());
-    }
-
-    loadUserRole();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      loadUserRole();
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
-
-  const canAccessDashboard =
-    userRole === "admin" ||
-    userRole === "super_admin" ||
-    userRole === "seller";
+  // آیکون پروفایل قبلا برای همه کاربران (از جمله ادمین/سوپرادمین/فروشنده)
+  // ثابت به /site/profile می‌رفت. حالا بر اساس نقش واقعی کاربر (همان
+  // منطقی که src/lib/redirect-user.ts از قبل تعریف کرده بود ولی هیچ‌جا
+  // استفاده نمی‌شد)، ادمین/سوپرادمین/فروشنده به /dashboard و مشتری عادی
+  // به /site/profile هدایت می‌شود.
+  const { role } = useUserRole();
+  const profileHref = role ? redirectUser(role) : "/site/profile";
 
   // ---------------------------------------------------------------------
   // سرچ‌باکس پیشرفته: قبلا فقط یک input ساده بود که هیچ پیشنهادی نشان
@@ -227,17 +176,6 @@ export default function Navbar() {
             <ThemeSwitcher />
           </div>
 
-          {canAccessDashboard && (
-            <Link
-              href="/dashboard"
-              className="navbar-icon-btn"
-              aria-label="پنل مدیریت"
-              title="پنل مدیریت"
-            >
-              <ShieldCheck size={19} />
-            </Link>
-          )}
-
           <Link href="/notifications" className="navbar-icon-btn" aria-label={t("notifications", language)}>
             <Bell size={19} />
           </Link>
@@ -254,7 +192,7 @@ export default function Navbar() {
             {cartCount > 0 && <span className="navbar-badge">{cartCount}</span>}
           </Link>
 
-          <Link href="/site/profile" className="navbar-icon-btn" aria-label={t("profile", language)}>
+          <Link href={profileHref} className="navbar-icon-btn" aria-label={t("profile", language)}>
             <User size={19} />
           </Link>
 

@@ -143,8 +143,16 @@ export default function ChatBot() {
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           localHour: new Date().getHours(),
 
-  // زبان رابط کاربر
+  // زبان رابط کاربر (همان زبانی که سایت از قبل برای این کاربر
+  // تشخیص داده — middleware/جغرافیا/انتخاب کاربر)
   interfaceLanguage: language,
+
+  // چند پیام آخر گفتگو، تا پاسخ هوش مصنوعی با ادامه‌ی مکالمه هماهنگ
+  // بماند و هر بار مسیر عوض نکند. قبلا این‌جا اصلا فرستاده نمی‌شد.
+  history: messages.slice(-10).map((item) => ({
+    role: item.role === "AI" ? "assistant" : "user",
+    content: item.text,
+  })),
 }),
       });
 

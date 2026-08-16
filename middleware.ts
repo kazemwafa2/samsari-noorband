@@ -144,7 +144,12 @@ export async function middleware(request: NextRequest) {
       .eq("id", user.id)
       .maybeSingle();
 
-    const allowedRoles = [ROLES.ADMIN, ROLES.SUPER_ADMIN];
+    // نکته: قبلا اینجا فقط ADMIN/SUPER_ADMIN مجاز بودند، در حالی‌که
+    // src/app/dashboard/layout.tsx (requireRole) به SELLER هم اجازه
+    // ورود به /dashboard را می‌دهد. این ناهماهنگی باعث می‌شد فروشنده
+    // بعد از لاگین (که به درستی به /dashboard هدایت می‌شد) همین‌جا در
+    // میدلور به «/» برگردانده شود و هیچ‌وقت پنل خودش را نبیند.
+    const allowedRoles = [ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.SELLER];
 
     if (!profile || !profile.is_active || !allowedRoles.includes(profile.role)) {
       return NextResponse.redirect(new URL("/", request.url));

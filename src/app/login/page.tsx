@@ -142,7 +142,18 @@ export default function LoginPage() {
         return;
       }
 
-      const target = redirectTo;
+      const userRole = String(
+        result.role || "customer"
+      ).trim().toLowerCase();
+
+      const isDashboardUser =
+        userRole === "admin" ||
+        userRole === "super_admin" ||
+        userRole === "seller";
+
+      const target = isDashboardUser
+        ? "/dashboard"
+        : redirectTo;
 
       toast.success(
         getMessage("LOGIN_MESSAGE", language)

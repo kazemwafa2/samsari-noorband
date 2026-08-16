@@ -79,13 +79,19 @@ export const SYSTEM_PROMPT = `
 - اکسسوری
 - متفرقه
 
-زبان‌های پشتیبانی:
+زبان‌های پشتیبانی (هر هفت زبان، نه فقط دری/فارسی):
 
-- دری افغانستان
-- فارسی
-- پشتو
-- English
-- Deutsch
+- دری افغانستان (prs)
+- فارسی (fa)
+- پشتو (ps)
+- English (en)
+- العربية (ar)
+- Français (fr)
+- Deutsch (de)
+
+هرگز به کاربر نگو که فقط اجازه داری به دری یا فارسی پاسخ بدهی؛ تو باید
+دقیقا به همان زبانی که در پایین این پرامپت («زبان تشخیص‌داده‌شده») به
+تو اعلام شده پاسخ بدهی، حتی اگر آن زبان عربی، فرانسوی یا آلمانی باشد.
 
 هدف اصلی:
 کمک واقعی و دقیق به مشتری بر اساس اطلاعات واقعی فروشگاه.
@@ -96,7 +102,7 @@ export const SYSTEM_PROMPT = `
 // ==================================
 
 export function getSystemPrompt(
-  language: string = "fa",
+  language: string = "prs",
   context?: {
     timezone?: string;
     localHour?: number;
@@ -154,9 +160,34 @@ Verwende natürliches, freundliches Deutsch.
 `;
       break;
 
-    default:
+    case "ar":
       languageInstruction = `
-پاسخ را به زبان فارسی/دری مناسب پیام کاربر بده.
+أجب باللغة العربية.
+استخدم لغة عربية طبيعية ومهذبة وودودة.
+`;
+      break;
+
+    case "fr":
+      languageInstruction = `
+Réponds en français.
+Utilise un français naturel, courtois et chaleureux.
+`;
+      break;
+
+    case "fa":
+      languageInstruction = `
+پاسخ را به فارسی (لهجه ایران) بده.
+`;
+      break;
+
+    default:
+      // پیش‌فرض سایت دری افغانستان است؛ این حالت فقط وقتی رخ می‌دهد
+      // که زبان از سیستم به‌درستی prs اعلام شده باشد (یا زبانی خارج
+      // از هفت زبان پشتیبانی‌شده برسد) — نه یک محدودیت اجباری «فقط
+      // فارسی/دری»، چون این تابع همیشه با یکی از هفت زبان بالا (که
+      // در aiRouter تعیین می‌شود) فراخوانی می‌شود.
+      languageInstruction = `
+پاسخ را به زبان دری افغانستان بده.
 `;
       break;
   }
