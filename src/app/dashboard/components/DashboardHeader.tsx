@@ -1,17 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { signOut } from "@/lib/auth";
 
 export default function DashboardHeader(){
 
 const router = useRouter();
 
 
-function logout(){
+// اصلاح شد: قبلا این دکمه فقط یک کلید بی‌ربط در localStorage
+// (`"user"`) را پاک می‌کرد که اصلا جایی نوشته/خوانده نمی‌شد؛ نشست
+// واقعی Supabase (که در کوکی است) دست‌نخورده باقی می‌ماند، یعنی کاربر
+// در واقع خارج نمی‌شد و با مراجعه‌ی بعدی به /dashboard دوباره وارد
+// پنل می‌شد. حالا از همان signOut واقعی که در بقیه‌ی پروژه
+// (src/components/auth/logout-button.tsx) استفاده می‌شود بهره می‌برد.
+async function logout(){
 
-localStorage.removeItem("user");
+await signOut();
 
-router.push("/login");
+router.replace("/login");
+router.refresh();
 
 }
 
