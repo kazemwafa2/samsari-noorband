@@ -1,54 +1,25 @@
 import { supabase } from "./supabase";
 
-
 export async function checkAdmin(){
 
+  const { data: { user } } = await supabase.auth.getUser();
 
-const {
-data:{
-session
-}
+  if(!user){
+    return false;
+  }
 
-}= await supabase.auth.getSession();
+  const {
+    data,
+    error
+  } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
 
+  if(error || !data){
+    return false;
+  }
 
-
-if(!session){
-
-return false;
-
-}
-
-
-
-const userId = session.user.id;
-
-
-
-const {
-data,
-error
-}= await supabase
-
-.from("profiles")
-
-.select("role")
-
-.eq("id",userId)
-
-.single();
-
-
-
-if(error || !data){
-
-return false;
-
-}
-
-
-
-return ["super_admin", "admin", "seller"].includes(data.role);
-
-
+  return ["super_admin", "admin", "seller"].includes(data.role);
 }
