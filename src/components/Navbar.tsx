@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Gem, Search, Heart, ShoppingBag, User, Bell, Menu, X } from "lucide-react";
+import {
+  Gem,
+  Search,
+  Heart,
+  ShoppingBag,
+  User,
+  Bell,
+  Menu,
+  X,
+  ShieldCheck,
+} from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { CurrencySwitcher } from "@/components/shared/CurrencySwitcher";
@@ -13,7 +23,7 @@ import { useCartStore } from "@/store/cart";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { t } from "@/lib/i18n/dictionaries";
 import { useSiteSettings } from "@/lib/site-settings";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { useCurrency } from "@/lib/currency";
 
 // نسخه قبلی این کامپوننت فقط چند ایموجی خام (🏠 🛍 🔎 🛒 🔔 👤) بدون
@@ -28,9 +38,60 @@ export default function Navbar() {
   const { language } = useLanguage();
   const { logoUrl } = useSiteSettings();
   const { format } = useCurrency();
-  const supabase = createClient();
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadUserRole() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!mounted) return;
+
+      if (!user) {
+        setUserRole(null);
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!mounted) return;
+
+      if (error || !profile) {
+        setUserRole(null);
+        return;
+      }
+
+      setUserRole(String(profile.role || "").trim().toLowerCase());
+    }
+
+    loadUserRole();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      loadUserRole();
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const canAccessDashboard =
+    userRole === "admin" ||
+    userRole === "super_admin" ||
+    userRole === "seller";
 
   // ---------------------------------------------------------------------
   // سرچ‌باکس پیشرفته: قبلا فقط یک input ساده بود که هیچ پیشنهادی نشان
@@ -165,6 +226,17 @@ export default function Navbar() {
             <CurrencySwitcher />
             <ThemeSwitcher />
           </div>
+
+          {canAccessDashboard && (
+            <Link
+              href="/dashboard"
+              className="navbar-icon-btn"
+              aria-label="پنل مدیریت"
+              title="پنل مدیریت"
+            >
+              <ShieldCheck size={19} />
+            </Link>
+          )}
 
           <Link href="/notifications" className="navbar-icon-btn" aria-label={t("notifications", language)}>
             <Bell size={19} />
