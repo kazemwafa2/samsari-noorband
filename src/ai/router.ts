@@ -235,7 +235,10 @@ export async function aiRouter({
       language,
     };
   } catch (error) {
-    console.log("AI ROUTER ERROR:", error);
+    console.error(
+      "AI ROUTER ERROR:",
+      error instanceof Error ? error.message : error
+    );
 
     return {
       success: false,
