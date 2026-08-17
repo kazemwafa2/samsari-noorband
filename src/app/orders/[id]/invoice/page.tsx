@@ -11,9 +11,26 @@ import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { t } from "@/lib/i18n/dictionaries";
 import { useCurrency } from "@/lib/currency";
 
-// این صفحه فاکتور را نمایش می‌دهد و با کلیک روی دکمه، یک PDF واقعی
-// (با jsPDF) به‌همراه QR Code (که شماره سفارش را رمزگذاری می‌کند) می‌سازد.
-// برای فعال شدن باید یک‌بار `npm install` بزنی تا jspdf و qrcode نصب شوند.
+// این صفحه فاکتور را نمایش می‌دهد و با کلیک روی دکمه، همان کارت فاکتور
+// را عینا (متن فارسی/دری، QR Code، اطلاعات مشتری، آدرس دکان، کد
+// تحویل و...) به یک PDF واقعی تبدیل می‌کند.
+//
+// نسخه قبلی این تابع با jsPDF متن‌ها را مستقیم با doc.text() رسم
+// می‌کرد. jsPDF به‌صورت پیش‌فرض فقط فونت‌های استاندارد لاتین
+// (Helvetica/Times/Courier با کدگذاری WinAnsi) را می‌شناسد و هیچ
+// حرف فارسی/دری‌ای در آن‌ها وجود ندارد؛ برای همین هر متن فارسی به
+// مجموعه‌ای از گلیف‌های نامربوط (مثل ûüþ-þîþÏþŽþŸ) تبدیل می‌شد — دقیقا
+// همان فاکتور خراب. علاوه بر آن، آن نسخه فقط شماره سفارش/تاریخ/وضعیت/
+// اقلام/جمع کل را می‌نوشت و نام مشتری، تلفن، آدرس، کد تحویل و اطلاعات
+// دکان (که در همین صفحه روی صفحه دیده می‌شود) اصلا در PDF نبود.
+//
+// حالا به‌جای رسم دستی متن، از html2canvas برای گرفتن یک «عکس» دقیق از
+// همان کارت فاکتوری که کاربر روی صفحه می‌بیند استفاده می‌شود (با همان
+// فونت فارسی سایت، همان چیدمان راست‌به‌چپ، همان QR Code) و آن عکس در
+// jsPDF به‌عنوان یک یا چند صفحه‌ی A4 قرار می‌گیرد. این‌طوری خروجی PDF
+// دقیقا همان چیزی است که در صفحه دیده می‌شود، نه یک نسخه‌ی جدا و
+// ناقص. (نیاز به `npm install` دارد تا jspdf، qrcode و html2canvas
+// نصب شوند.)
 
 export default function Invoice() {
   const supabase = createClient();
@@ -27,6 +44,7 @@ export default function Invoice() {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const invoiceCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (id) load();
@@ -53,46 +71,59 @@ export default function Invoice() {
   }
 
   async function downloadPdf() {
-    if (!order) return;
+    if (!order || !invoiceCardRef.current) return;
 
     setGenerating(true);
 
-    // jsPDF فقط سمت کلاینت import می‌شود تا در build سمت سرور مشکلی ایجاد نکند
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
+    try {
+      // هر دو کتابخانه فقط سمت کلاینت import می‌شوند تا در build سمت
+      // سرور مشکلی ایجاد نکنند
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
 
-    doc.setFontSize(16);
-    doc.text(`${SITE_CONFIG.name} - Invoice`, 14, 20);
+      // پس‌زمینه سفید ثابت (حتی اگر سایت در حالت تاریک باشد)، چون
+      // خروجی چاپی/دانلودی باید همیشه یک برگه‌ی سفید استاندارد باشد
+      const canvas = await html2canvas(invoiceCardRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
 
-    doc.setFontSize(11);
-    doc.text(`Order: ${order.order_number || order.id}`, 14, 32);
-    doc.text(`Date: ${new Date(order.created_at).toLocaleDateString("en-US")}`, 14, 39);
-    doc.text(`Status: ${order.status}`, 14, 46);
+      const imgData = canvas.toDataURL("image/png");
 
-    let y = 60;
-    doc.text("Items:", 14, y);
-    y += 8;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidthMm = pdf.internal.pageSize.getWidth();
+      const pageHeightMm = pdf.internal.pageSize.getHeight();
 
-    items.forEach((item) => {
-      doc.text(
-        `${item.product_name}  x${item.quantity}  -  ${item.total_price}`,
-        14,
-        y
-      );
-      y += 7;
-    });
+      const imgWidthMm = pageWidthMm;
+      const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
 
-    y += 6;
-    doc.setFontSize(13);
-    doc.text(`Total: ${order.total_amount}`, 14, y);
+      if (imgHeightMm <= pageHeightMm) {
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidthMm, imgHeightMm);
+      } else {
+        // فاکتورهای با اقلام زیاد ممکن است از یک صفحه A4 بلندتر شوند؛
+        // تصویر را در چند صفحه، هرکدام با افست عمودی منفی، تکرار
+        // می‌کنیم تا محتوا بدون بریدگی روی چند برگه ادامه پیدا کند
+        let heightLeftMm = imgHeightMm;
+        let positionMm = 0;
 
-    if (qrDataUrl) {
-      doc.addImage(qrDataUrl, "PNG", 150, 20, 40, 40);
+        pdf.addImage(imgData, "PNG", 0, positionMm, imgWidthMm, imgHeightMm);
+        heightLeftMm -= pageHeightMm;
+
+        while (heightLeftMm > 0) {
+          positionMm = heightLeftMm - imgHeightMm;
+          pdf.addPage();
+          pdf.addImage(imgData, "PNG", 0, positionMm, imgWidthMm, imgHeightMm);
+          heightLeftMm -= pageHeightMm;
+        }
+      }
+
+      pdf.save(`invoice-${order.order_number || order.id}.pdf`);
+    } finally {
+      setGenerating(false);
     }
-
-    doc.save(`invoice-${order.order_number || order.id}.pdf`);
-
-    setGenerating(false);
   }
 
   if (loading) return <main className="home-page"><p>{t("loadingText", language)}</p></main>;
@@ -123,7 +154,7 @@ export default function Invoice() {
           دقیقا مثل طرح مرجع یک کارت رسید یکپارچه با ردیف بالا
           (لوگو+شماره فاکتور)، ردیف اطلاعات مشتری کنار QR، جدول اقلام و
           ردیف مجموع پررنگ در پایین است. */}
-      <div className="invoice-card">
+      <div className="invoice-card" ref={invoiceCardRef}>
         <div className="invoice-head">
           <div>
             <h2>{SITE_CONFIG.name}</h2>
