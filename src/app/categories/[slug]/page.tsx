@@ -5,14 +5,22 @@ import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useCartStore } from "@/store/cart";
 import type { Product } from "@/types/product";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { t } from "@/lib/i18n/dictionaries";
+import { resolveTranslated } from "@/lib/i18n/resolveContent";
+import { useCurrency } from "@/lib/currency";
 
 // نسخه قبلی این صفحه محصولات کاملا ساختگی داشت و دکمه «افزودن به سبد
-// خرید» اصلا onClick نداشت (هیچ کاری نمی‌کرد).
+// خرید» اصلا onClick نداشت (هیچ کاری نمی‌کرد). همچنین اصلا به سیستم
+// ترجمه وصل نبود — همه‌ی متن‌ها (حتی «در حال بارگذاری»، «افزودن به
+// سبد خرید») همیشه فارسی خام بودند، صرف‌نظر از زبان سایت.
 
 export default function CategoryDetailsPage() {
   const supabase = createClient();
   const params = useParams();
   const slug = params.slug as string;
+  const { language } = useLanguage();
+  const { format } = useCurrency();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categoryTitle, setCategoryTitle] = useState("");
@@ -29,12 +37,12 @@ export default function CategoryDetailsPage() {
 
     const { data: category } = await supabase
       .from("categories")
-      .select("id, title")
+      .select("id, title, title_translations")
       .eq("slug", slug)
       .maybeSingle();
 
     if (category) {
-      setCategoryTitle(category.title);
+      setCategoryTitle(resolveTranslated(category.title, category.title_translations, language));
 
       const { data } = await supabase
         .from("products")
@@ -65,18 +73,20 @@ export default function CategoryDetailsPage() {
 
   return (
     <div className="container home-page">
-      <h1 className="section-title">محصولات دسته {categoryTitle || slug}</h1>
+      <h1 className="section-title">
+        {t("categoryProductsTitlePrefix", language)} {categoryTitle || slug}
+      </h1>
 
-      {loading && <p>در حال بارگذاری...</p>}
+      {loading && <p>{t("loadingText", language)}</p>}
 
       <div className="products-grid">
         {products.map((product) => (
           <div key={product.id} className="product-card">
             <h2>{product.title}</h2>
-            <p className="product-price">{product.price.toLocaleString("fa-AF")} افغانی</p>
+            <p className="product-price">{format(Number(product.price))}</p>
 
             <button className="primary-btn" onClick={() => handleAddToCart(product)} disabled={product.stock <= 0}>
-              افزودن به سبد خرید
+              {t("addToCartButton", language)}
             </button>
           </div>
         ))}
@@ -84,7 +94,7 @@ export default function CategoryDetailsPage() {
 
       {!loading && products.length === 0 && (
         <div className="empty-state">
-          <h2>محصولی یافت نشد.</h2>
+          <h2>{t("noProductsFoundText", language)}</h2>
         </div>
       )}
     </div>

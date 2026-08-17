@@ -56,6 +56,20 @@ export default function OrderDetailPage() {
     loadOrder();
   }, []);
 
+  // مطابق همان واژگان یکپارچه‌شده در OrderTracker.tsx و پنل مدیریت
+  function statusLabel(status: string) {
+    switch (status) {
+      case "pending": return t("statusPending", language);
+      case "paid": return t("statusPaid", language);
+      case "packing": return t("statusPacking", language);
+      case "shipping": return t("statusShipping", language);
+      case "completed": return t("statusCompleted", language);
+      case "cancelled": return t("statusCancelled", language);
+      case "returned": return t("statusReturned", language);
+      default: return status;
+    }
+  }
+
   if (loading) {
     return (
       <main className="home-page">
@@ -80,8 +94,8 @@ export default function OrderDetailPage() {
         <p>{t("orderCodeLabel", language)}: {order.id}</p>
         <p>{t("totalAmountLabel", language)}: {format(Number(order.total_price))}</p>
         <p>{t("discountLabel", language)}: {format(Number(order.discount_price))}</p>
-        <p>{t("paymentStatusLabel", language)}: {order.payment_status}</p>
-        <p>{t("orderStatusLabel", language)}: {order.order_status}</p>
+        <p>{t("paymentStatusLabel", language)}: {order.payment_status === "paid" ? t("statusPaid", language) : t("statusPending", language)}</p>
+        <p>{t("orderStatusLabel", language)}: {statusLabel(order.order_status || order.status)}</p>
         <p>
           {t("dateLabel", language)}:{" "}
           {new Date(order.created_at).toLocaleDateString(language === "en" ? "en-US" : "fa-AF")}

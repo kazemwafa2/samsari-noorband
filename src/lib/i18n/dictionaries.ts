@@ -57,7 +57,7 @@ export function getLocalizedPath(currentPathname: string, targetLanguage: Langua
   return rest === "/" ? `/${targetLanguage}` : `/${targetLanguage}${rest}`;
 }
 
-export function detectLanguageFromBrowser(browserLocale: string): Language {
+export function detectLanguageFromBrowser(browserLocale: string): Language | null {
   const code = browserLocale.toLowerCase().split("-")[0];
 
   const map: Record<string, Language> = {
@@ -75,7 +75,13 @@ export function detectLanguageFromBrowser(browserLocale: string): Language {
     // مستقل ندارد، بلکه از آلمانی/فرانسوی/ایتالیایی استفاده می‌کند.
   };
 
-  return map[code] || "prs";
+  // قبلا این تابع وقتی زبان مرورگر ناشناخته بود، به‌صورت خاموش "prs"
+  // برمی‌گرداند — یعنی فراخوان نمی‌توانست تشخیص بدهد که آیا واقعا زبان
+  // مرورگر دری تشخیص داده شده یا صرفا یک پیش‌فرض بی‌معنا برگشته. حالا
+  // در نبود تطبیق واقعی null برمی‌گرداند تا فراخوان (LanguageProvider)
+  // بتواند در آن حالت به مرحله بعدی (تشخیص جغرافیایی) برود، نه اینکه
+  // کورکورانه دری را جایگزین سیگنال واقعی‌تر جغرافیا کند.
+  return map[code] || null;
 }
 
 // نکته درباره «دری» (prs): دری و فارسی همان یک زبان با تفاوت‌های
@@ -104,7 +110,31 @@ export const dictionaries: Record<string, Partial<Record<Language, string>> & { 
   categories: { fa: "دسته‌بندی‌ها", prs: "دسته‌بندی‌ها", ps: "کټګورۍ", en: "Categories", ar: "الفئات", fr: "Catégories", de: "Kategorien", tr: "Kategoriler", es: "Categorías" },
   about: { fa: "درباره ما", prs: "درباره ما", ps: "زموږ په اړه", en: "About Us", ar: "من نحن", fr: "À propos", de: "Über uns", tr: "Hakkımızda", es: "Sobre nosotros" },
   contactUs: { fa: "تماس با ما", prs: "تماس با ما", ps: "اړیکه", en: "Contact Us", ar: "اتصل بنا", fr: "Contact", de: "Kontakt", tr: "Bize Ulaşın", es: "Contáctenos" },
+  // نکته اصلاح‌شده: قبلا این برچسب‌ها فقط در OrderTracker.tsx و
+  // dashboard/orders/[id]/page.tsx به‌صورت رشته‌ی فارسی خام تکرار
+  // می‌شدند (و حتی با هم هم‌خوانی نداشتند). حالا یک منبع واحد و
+  // چندزبانه برای همه‌جای سایت.
   searchPlaceholder: { fa: "جستجو در محصولات...", prs: "جستجو در محصولات...", ps: "په محصولاتو کې لټون...", en: "Search products...", ar: "البحث في المنتجات...", fr: "Rechercher des produits...", de: "Produkte suchen...", tr: "Ürünlerde ara...", es: "Buscar productos..." },
+  statusPending: { fa: "در انتظار بررسی", prs: "در انتظار بررسی", ps: "د بررسۍ په تمه", en: "Pending review", ar: "قيد المراجعة", fr: "En attente", de: "Ausstehend", tr: "İnceleme bekliyor", es: "Pendiente de revisión" },
+  statusPaid: { fa: "پرداخت تایید شده", prs: "پرداخت تایید شده", ps: "تادیه تایید شوې", en: "Payment confirmed", ar: "تم تأكيد الدفع", fr: "Paiement confirmé", de: "Zahlung bestätigt", tr: "Ödeme onaylandı", es: "Pago confirmado" },
+  statusPacking: { fa: "در حال آماده‌سازی", prs: "در حال آماده‌سازی", ps: "چمتو کیږي", en: "Preparing order", ar: "قيد التجهيز", fr: "En préparation", de: "Wird vorbereitet", tr: "Hazırlanıyor", es: "Preparando" },
+  statusShipping: { fa: "ارسال شده", prs: "ارسال شده", ps: "لیږل شوی", en: "Shipped", ar: "تم الشحن", fr: "Expédié", de: "Versandt", tr: "Kargoya verildi", es: "Enviado" },
+  statusCompleted: { fa: "تحویل داده شده", prs: "تحویل داده شده", ps: "تحویل شوی", en: "Delivered", ar: "تم التسليم", fr: "Livré", de: "Zugestellt", tr: "Teslim edildi", es: "Entregado" },
+  statusCancelled: { fa: "لغو شده", prs: "لغو شده", ps: "لغوه شوی", en: "Cancelled", ar: "ملغى", fr: "Annulé", de: "Storniert", tr: "İptal edildi", es: "Cancelado" },
+  statusReturned: { fa: "مرجوع شده", prs: "مرجوع شده", ps: "بیرته ورکړل شوی", en: "Returned", ar: "مرتجع", fr: "Retourné", de: "Zurückgegeben", tr: "İade edildi", es: "Devuelto" },
+  orderCancelledNotice: { fa: "سفارش لغو شده است", prs: "سفارش لغو شده است", ps: "دا فرمایش لغوه شوی دی", en: "This order has been cancelled", ar: "تم إلغاء هذا الطلب", fr: "Cette commande a été annulée", de: "Diese Bestellung wurde storniert", tr: "Bu sipariş iptal edildi", es: "Este pedido ha sido cancelado" },
+  orderReturnedNotice: { fa: "سفارش مرجوع شده است", prs: "سفارش مرجوع شده است", ps: "دا فرمایش بیرته ورکړل شوی دی", en: "This order has been returned", ar: "تم إرجاع هذا الطلب", fr: "Cette commande a été retournée", de: "Diese Bestellung wurde zurückgegeben", tr: "Bu sipariş iade edildi", es: "Este pedido ha sido devuelto" },
+  orderStatusHistoryTitle: { fa: "تاریخچه وضعیت", prs: "تاریخچه وضعیت", ps: "د حالت تاریخچه", en: "Status history", ar: "سجل الحالة", fr: "Historique du statut", de: "Statusverlauf", tr: "Durum geçmişi", es: "Historial de estado" },
+  rememberMeLabel: { fa: "مرا به خاطر بسپار", prs: "مرا به خاطر بسپار", ps: "ما په یاد ولره", en: "Remember me", ar: "تذكرني", fr: "Se souvenir de moi", de: "Angemeldet bleiben", tr: "Beni hatırla", es: "Recuérdame" },
+  categoryProductsTitlePrefix: { fa: "محصولات دسته", prs: "محصولات دسته", ps: "د لیستې محصولات", en: "Products in", ar: "منتجات فئة", fr: "Produits de la catégorie", de: "Produkte der Kategorie", tr: "Kategori ürünleri:", es: "Productos de la categoría" },
+  addToCartButton: { fa: "افزودن به سبد خرید", prs: "افزودن به سبد خرید", ps: "سبد ته اضافه کول", en: "Add to cart", ar: "أضف إلى السلة", fr: "Ajouter au panier", de: "In den Warenkorb", tr: "Sepete ekle", es: "Añadir al carrito" },
+  noProductsFoundText: { fa: "محصولی یافت نشد.", prs: "محصولی یافت نشد.", ps: "هیڅ محصول ونه موندل شو.", en: "No products found.", ar: "لم يتم العثور على منتجات.", fr: "Aucun produit trouvé.", de: "Keine Produkte gefunden.", tr: "Ürün bulunamadı.", es: "No se encontraron productos." },
+  // آدرس و ساعات کاری دوکان — قبلا این‌ها همیشه فارسی خام از
+  // SITE_CONFIG در فوتر/فاکتور چاپ می‌شدند، صرف‌نظر از زبان سایت
+  storeAddressValue: { fa: "افغانستان، ولایت غزنی، ولسوالی جاغوری، بازار سنگ‌ماشه، مارکیت VIP، زیر قومندانی، دوکان شماره ۵", prs: "افغانستان، ولایت غزنی، ولسوالی جاغوری، بازار سنگ‌ماشه، مارکیت VIP، زیر قومندانی، دوکان شماره ۵", ps: "افغانستان، غزني ولایت، جاغوري ولسوالۍ، د تیږې د ماشین بازار، VIP مارکیټ، د قوماندانۍ لاندې، پلورنځی ۵", en: "Sang-e-Mashe Bazaar, VIP Market, near the command post, Shop No. 5, Jaghori District, Ghazni Province, Afghanistan", ar: "سوق سنگ ماشه، مركز VIP، بالقرب من مركز القيادة، محل رقم ٥، مقاطعة جاغوري، ولاية غزني، أفغانستان", fr: "Marché Sang-e-Mashe, VIP Market, près du poste de commandement, boutique n° 5, district de Jaghori, province de Ghazni, Afghanistan", de: "Sang-e-Mashe-Basar, VIP Market, beim Kommandoposten, Laden Nr. 5, Distrikt Jaghori, Provinz Ghazni, Afghanistan", tr: "Sang-e-Mashe Pazarı, VIP Market, komuta merkezi yakını, No. 5 Dükkan, Jaghori İlçesi, Gazni Vilayeti, Afganistan", es: "Mercado Sang-e-Mashe, VIP Market, junto al puesto de mando, tienda n.º 5, distrito de Jaghori, provincia de Ghazni, Afganistán" },
+  workingHoursValue: { fa: "شنبه تا پنجشنبه • ۸ صبح الی ۶ عصر", prs: "شنبه تا پنجشنبه • ۸ صبح الی ۶ عصر", ps: "شنبه تر پنجشنبې پورې • ۸ سهار تر ۶ ماښام", en: "Saturday to Thursday • 8 AM to 6 PM", ar: "السبت إلى الخميس • ٨ صباحاً حتى ٦ مساءً", fr: "Samedi à jeudi • 8h à 18h", de: "Samstag bis Donnerstag • 8:00 bis 18:00 Uhr", tr: "Cumartesi - Perşembe • 08:00 - 18:00", es: "Sábado a jueves • 8:00 a 18:00" },
+  // نوار اطلاعیه/تخفیف باریک بالای هدر — مطابق طرح مرجع
+  announcementBarText: { fa: "تخفیف ویژه تا ۳۰٪ | ارسال رایگان برای خرید بالای ۱۰۰۰ افغانی", prs: "تخفیف ویژه تا ۳۰٪ | ارسال رایگان برای خرید بالای ۱۰۰۰ افغانی", ps: "ځانګړی تخفیف تر ۳۰٪ پورې | د ۱۰۰۰ افغانیو نه پورته پیرود لپاره وړیا لېږد", en: "Special offer up to 30% off | Free shipping on orders over 1000 AF", ar: "عرض خاص حتى ٣٠٪ | شحن مجاني للطلبات فوق ١٠٠٠ أفغاني", fr: "Offre spéciale jusqu'à 30% | Livraison gratuite dès 1000 AF", de: "Sonderangebot bis zu 30% | Kostenloser Versand ab 1000 AF", tr: "30%'ye varan özel indirim | 1000 AF üzeri siparişlerde ücretsiz kargo", es: "Oferta especial hasta 30% | Envío gratis en pedidos superiores a 1000 AF" },
   products: { fa: "محصولات", prs: "محصولات", ps: "توکي", en: "Products", ar: "المنتجات", fr: "Produits", de: "Produkte", tr: "Ürünler", es: "Productos" },
   search: { fa: "جستجو", prs: "جستجو", ps: "لټون", en: "Search", ar: "بحث", fr: "Rechercher", de: "Suche", tr: "Ara", es: "Buscar" },
   cart: { fa: "سبد خرید", prs: "سبد خرید", ps: "سبد", en: "Cart", ar: "السلة", fr: "Panier", de: "Warenkorb", tr: "Sepet", es: "Carrito" },

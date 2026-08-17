@@ -22,16 +22,33 @@ export default function Footer() {
     logoUrl,
     storeImageDayUrl,
     storeImageNightUrl,
+    storeGalleryUrls,
+    socialFacebook,
+    socialInstagram,
+    socialWhatsapp,
   } = useSiteSettings();
 
   const isDark =
     typeof document !== "undefined" &&
     document.documentElement.getAttribute("data-theme") === "dark";
 
+  // نکته: اگر ادمین چند عکس دوکان (گالری) آپلود کرده باشد، اولین عکس
+  // گالری نمایش داده می‌شود؛ وگرنه همان عکس روز/شب قدیمی (سازگاری با
+  // نسخه‌های قبلی که فقط یک عکس داشتند)
   const storeImage =
+    storeGalleryUrls[0] ||
     (isDark ? storeImageNightUrl : storeImageDayUrl) ||
     storeImageDayUrl ||
     storeImageNightUrl;
+
+  // لینک‌های شبکه‌های اجتماعی و واتساپ: اگر از پنل مدیریت تنظیم شده
+  // باشند همان استفاده می‌شود، وگرنه مقدار پیش‌فرض کد (SITE_CONFIG)
+  const facebookHref = socialFacebook || SITE_CONFIG.social.facebook;
+  const instagramHref = socialInstagram || SITE_CONFIG.social.instagram;
+  const whatsappNumber = socialWhatsapp || SITE_CONFIG.whatsapp.number;
+  const whatsappHref = socialWhatsapp
+    ? `https://wa.me/${socialWhatsapp.replace(/\D/g, "")}`
+    : SITE_CONFIG.whatsapp.link;
 
   const quickLinks = [
     { href: "/", label: t("home", language) },
@@ -100,7 +117,7 @@ export default function Footer() {
 
             <div>
               <small>{t("storeAddressTitleEmoji", language)}</small>
-              <span>{SITE_CONFIG.address}</span>
+              <span>{t("storeAddressValue", language)}</span>
             </div>
           </div>
 
@@ -111,10 +128,7 @@ export default function Footer() {
 
             <div>
               <small>{t("footerWorkingHours", language)}</small>
-              <span>
-                {SITE_CONFIG.workingHours.days} •{" "}
-                {SITE_CONFIG.workingHours.hours}
-              </span>
+              <span>{t("workingHoursValue", language)}</span>
             </div>
           </div>
 
@@ -149,7 +163,7 @@ export default function Footer() {
             ))}
 
             <a
-              href={SITE_CONFIG.whatsapp.link}
+              href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
               className="footer-pro-link"
@@ -159,7 +173,7 @@ export default function Footer() {
               </span>
               <span>
                 {t("footerWhatsapp", language)}:{" "}
-                {SITE_CONFIG.whatsapp.number}
+                {whatsappNumber}
               </span>
               <ArrowUpRight size={14} className="footer-pro-link-arrow" />
             </a>
@@ -178,7 +192,7 @@ export default function Footer() {
           <div className="footer-pro-social-grid">
 
             <a
-              href={SITE_CONFIG.social.facebook}
+              href={facebookHref}
               target="_blank"
               rel="noopener noreferrer"
               className="footer-pro-social-card"
@@ -191,7 +205,7 @@ export default function Footer() {
             </a>
 
             <a
-              href={SITE_CONFIG.social.instagram}
+              href={instagramHref}
               target="_blank"
               rel="noopener noreferrer"
               className="footer-pro-social-card"

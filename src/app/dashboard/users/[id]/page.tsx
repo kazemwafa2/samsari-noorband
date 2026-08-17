@@ -49,7 +49,7 @@ export default function UserDetail() {
     setSaving(false);
 
     if (error) {
-      alert("تغییر نقش با خطا مواجه شد.");
+      alert("تغییر نقش با خطا مواجه شد: " + error.message);
       return;
     }
 
@@ -67,8 +67,16 @@ export default function UserDetail() {
     setSaving(false);
 
     if (error) {
-      alert("تغییر وضعیت حساب با خطا مواجه شد.");
+      alert("تغییر وضعیت حساب با خطا مواجه شد: " + error.message);
+      return;
     }
+
+    // نکته اصلاح‌شده: قبلا بعد از موفقیت هیچ‌وقت state محلی به‌روز
+    // نمی‌شد — یعنی دکمه همیشه «مسدود کردن کاربر» نشان می‌داد، حتی
+    // بعد از مسدودشدن واقعی کاربر، و هیچ راهی برای فعال‌سازی دوباره
+    // (چون آن حالت هیچ‌وقت نمایش داده نمی‌شد) وجود نداشت. این همان
+    // «مدیریت نمی‌شه» بود.
+    setUser((prev) => (prev ? { ...prev, is_active: active } : prev));
   }
 
   if (loading) {
@@ -111,14 +119,31 @@ export default function UserDetail() {
           </select>
         </div>
 
+        <p>
+          وضعیت حساب:{" "}
+          <strong style={{ color: user.is_active === false ? "#EF4444" : "#22C55E" }}>
+            {user.is_active === false ? "مسدود" : "فعال"}
+          </strong>
+        </p>
+
         <div>
-          <button
-            className="primary-btn"
-            disabled={saving}
-            onClick={() => toggleActive(false)}
-          >
-            مسدود کردن کاربر
-          </button>
+          {user.is_active === false ? (
+            <button
+              className="primary-btn"
+              disabled={saving}
+              onClick={() => toggleActive(true)}
+            >
+              فعال‌سازی کاربر
+            </button>
+          ) : (
+            <button
+              className="primary-btn"
+              disabled={saving}
+              onClick={() => toggleActive(false)}
+            >
+              مسدود کردن کاربر
+            </button>
+          )}
         </div>
       </div>
     </main>

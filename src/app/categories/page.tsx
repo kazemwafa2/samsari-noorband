@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { t } from "@/lib/i18n/dictionaries";
+import { resolveTranslated } from "@/lib/i18n/resolveContent";
 
 // نسخه قبلی این صفحه ۹ دسته‌بندی کاملا ساختگی (با تعداد محصول فیک مثل
 // ۱۲۰، ۹۵، ۲۱۰) داشت که هیچ ربطی به دیتابیس نداشت.
@@ -43,7 +44,9 @@ export default function CategoriesPage() {
         {categories.map((category) => (
           <Link key={category.id} href={`/categories/${category.slug}`}>
             <div className="card premium-shadow">
-              <h2 style={{ textAlign: "center", marginTop: "15px" }}>{category.title}</h2>
+              <h2 style={{ textAlign: "center", marginTop: "15px" }}>
+                {resolveTranslated(category.title, category.title_translations, language)}
+              </h2>
 
               <p style={{ textAlign: "center", marginTop: "10px", color: "#6B7280" }}>
                 {category.products?.[0]?.count ?? 0} {t("productCountSuffix", language)}

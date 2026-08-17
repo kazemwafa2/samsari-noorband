@@ -3,7 +3,8 @@
 import Link from "next/link";
 
 const SECTIONS = [
-  { title: "🖼️ برندینگ (لوگو و آدرس دوکان)", path: "/dashboard/settings/branding" },
+  { title: "🖼️ برندینگ، تماس و رسانه", path: "/dashboard/settings/branding" },
+  { title: "🎨 تنظیمات ظاهری (رنگ‌ها و بنرها)", path: "/dashboard/settings/appearance" },
   { title: "⚙️ عمومی و محصولات", path: "/dashboard/settings/products" },
   { title: "💳 پرداخت", path: "/dashboard/settings/payment" },
   { title: "🔔 اعلان‌ها", path: "/dashboard/settings/notification" },

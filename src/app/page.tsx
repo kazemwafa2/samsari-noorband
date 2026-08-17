@@ -39,8 +39,10 @@ import { useCurrency } from "@/lib/currency";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useCompareStore } from "@/store/compare";
 import { getRecentlyViewed } from "@/lib/recentlyViewed";
+import { useSiteSettings } from "@/lib/site-settings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { t } from "@/lib/i18n/dictionaries";
+import { resolveTranslated } from "@/lib/i18n/resolveContent";
 import { formatLocalDate } from "@/lib/geo/timezone";
 
 const CATEGORY_ICONS: Record<string, typeof Gem> = {
@@ -103,6 +105,7 @@ export default function Home() {
   const { language } = useLanguage();
   const { isInWishlist, add: addToWishlist, remove: removeFromWishlist } = useWishlist();
   const { productIds: compareIds, clear: clearCompare } = useCompareStore();
+  const { promoVideoUrl, promoVideoEnabled } = useSiteSettings();
 
   const [newProducts, setNewProducts] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -418,6 +421,36 @@ export default function Home() {
       </Reveal>
 
       {/*======================
+      PROMO VIDEO — از پنل مدیریت (تنظیمات → برندینگ) قابل تنظیم/تعویض
+      =======================*/}
+
+      {promoVideoEnabled && promoVideoUrl && (
+        <Reveal>
+          <section className="home-section-v2">
+            <div className="promo-video-wrap">
+              {promoVideoUrl.includes("youtube.com") || promoVideoUrl.includes("youtu.be") || promoVideoUrl.includes("aparat.com") ? (
+                <iframe
+                  src={promoVideoUrl}
+                  className="promo-video-frame"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              ) : (
+                <video
+                  src={promoVideoUrl}
+                  className="promo-video-frame"
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              )}
+            </div>
+          </section>
+        </Reveal>
+      )}
+
+      {/*======================
       CATEGORIES
       =======================*/}
 
@@ -439,20 +472,21 @@ export default function Home() {
                 {categories.map((cat) => {
                   const Icon = CATEGORY_ICONS[cat.slug] || Package;
                   const count = cat.products?.[0]?.count ?? 0;
+                  const catTitle = resolveTranslated(cat.title, cat.title_translations, language);
 
                   return (
                     <Link key={cat.id} href={`/categories/${cat.slug}`} className="category-card">
                       {cat.image_url ? (
                         <span className="category-photo">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={cat.image_url} alt={cat.title} />
+                          <img src={cat.image_url} alt={catTitle} />
                         </span>
                       ) : (
                         <span className="category-icon">
                           <Icon size={26} />
                         </span>
                       )}
-                      <strong>{cat.title}</strong>
+                      <strong>{catTitle}</strong>
                       <span className="category-count">{count} {t("products", language)}</span>
                     </Link>
                   );

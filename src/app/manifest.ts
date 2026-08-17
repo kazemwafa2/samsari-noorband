@@ -10,18 +10,35 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
 // همه‌جای دیگر پروژه فرق داشت.
 let siteName: string = SITE_CONFIG.name;
 
+// آیکون PWA/نصب روی موبایل (همان مربع آبی‌سرمه‌ای با حرف «N» که در
+// تب مرورگر/صفحه اصلی گوشی دیده می‌شود) قبلا همیشه از دو فایل ثابت
+// public/icon-192.png و public/icon-512.png خوانده می‌شد — یعنی حتی
+// بعد از تغییر لوگو از پنل مدیریت (تنظیمات → برندینگ)، این آیکون خاص
+// (favicon/PWA) همچنان همان «N» قدیمی باقی می‌ماند، چون آن صفحه فقط
+// روی navbar/footer اثر می‌گذاشت نه روی این فایل. حالا همان logo_url
+// که در پنل برندینگ آپلود می‌شود، در صورت وجود، به‌جای فایل‌های ثابت
+// استفاده می‌شود؛ اگر ادمین چیزی آپلود نکرده باشد، دقیقا همان آیکون
+// قبلی (fallback) نمایش داده می‌شود.
+let logoUrl: string | null = null;
+
 try{
 
 const supabase = await createClient();
 
 const { data } = await supabase
   .from("site_settings")
-  .select("site_name")
+  .select("site_name, logo_url")
   .single();
 
   if(data?.site_name){
 
 siteName = data.site_name;
+
+}
+
+  if(data?.logo_url){
+
+logoUrl = data.logo_url;
 
 }
 
@@ -68,7 +85,23 @@ prefer_related_applications:false,
 
 related_applications:[],
 
-icons:[
+icons: logoUrl ? [
+
+{
+src: logoUrl,
+sizes: "192x192",
+type: "image/png",
+purpose: "any",
+},
+
+{
+src: logoUrl,
+sizes: "512x512",
+type: "image/png",
+purpose: "any",
+},
+
+] : [
 
 {
 src:"/icon-192.png",

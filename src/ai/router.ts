@@ -4,7 +4,7 @@ import { imageAI } from "./image";
 import { voiceAI } from "./voice";
 import { detectLanguage, isSupportedLanguage, type SupportedLanguage } from "./detectLanguage";
 import { getPersonality } from "./personality";
-import { orderIntentAI } from "./orders";
+import { orderIntentAI, looksLikeIssueReport, reportIssueToAdmin } from "./orders";
 import { getSystemPrompt } from "./systemPrompt";
 import { askGroq, type GroqHistoryTurn } from "@/lib/groq";
 
@@ -95,11 +95,14 @@ export async function aiRouter({
     }
 
     //====================
-    // ORDER (رهگیری/لغو/لیست سفارش) — قبلا این بخش اصلا وجود نداشت
+    // ORDER (رهگیری/لغو/لیست سفارش) — قبلا این بخش فقط برای کاربر
+    // لاگین‌شده اجرا می‌شد. حالا حتی کاربر مهمان هم می‌تواند با کد
+    // پیگیری سفارشش را دنبال کند (orderIntentAI خودش تصمیم می‌گیرد چه
+    // چیزی بدون ورود مجاز است).
     //====================
 
-    if (userId && message.trim()) {
-      const orderReply = await orderIntentAI(userId, message);
+    if (message.trim()) {
+      const orderReply = await orderIntentAI(userId || "", message);
 
       if (orderReply) {
         return {
@@ -127,15 +130,43 @@ export async function aiRouter({
     //====================
     // PRODUCT SEARCH
     //====================
+    // نکته مهم: قبلا هر پیام غیر-احوال‌پرسی (حتی سؤال‌های کاملا عمومی
+    // مثل «الان ساعت چنده؟» یا «من اهل کجام؟») اول مستقیم به جستجوی
+    // محصول در دیتابیس فرستاده می‌شد. یعنی اگر آن جستجو با خطا مواجه
+    // می‌شد (مثلا چون پیام کاما داشت و فیلتر .or() را خراب می‌کرد)،
+    // متن خطای آن مستقیم به‌جای پاسخ به کاربر نشان داده می‌شد — بدون
+    // اینکه اصلا به Groq (هوش مصنوعی واقعی) برسد. حالا فقط وقتی پیام
+    // واقعا نشانه‌ی سؤال درباره‌ی محصول/قیمت/موجودی دارد (به چند زبان)
+    // جستجوی محصول اجرا می‌شود؛ در غیر این‌صورت مستقیم به Groq می‌رود
+    // تا بتواند به هر نوع سؤالی (عمومی، آدرس فروشگاه، ساعت، و...)
+    // واقعا پاسخ مرتبط بدهد.
+    const PRODUCT_INTENT_PATTERNS = [
+      // دری/فارسی
+      "قیمت", "چنده", "چند است", "دارید", "دارین", "موجود", "خرید", "فروش", "محصول", "جنس",
+      // پشتو
+      "بیه", "لرئ",
+      // انگلیسی
+      "price", "cost", "buy", "purchase", "product", "available", "stock", "have",
+      // عربی
+      "سعر", "منتج", "متوفر", "اشتري",
+      // فرانسوی
+      "prix", "produit", "acheter", "disponible",
+      // آلمانی
+      "preis", "produkt", "kaufen", "verfügbar",
+    ];
+    const looksLikeProductQuestion = PRODUCT_INTENT_PATTERNS.some((p) =>
+      lowerMessage.includes(p)
+    );
 
-    if (message.trim() && !isGreeting) {
+    if (message.trim() && !isGreeting && looksLikeProductQuestion) {
       const products = await searchProductsAI(message);
 
-      if (
-        products &&
-        !products.includes("پیدا نشد") &&
-        !products.includes("لطفاً نام محصول")
-      ) {
+      // چک مثبت: فقط وقتی واقعا نتیجه‌ی معتبر جستجو برگشته (که همیشه با
+      // این پیشوند شروع می‌شود) به‌عنوان پاسخ محصول قبول می‌شود. قبلا
+      // اینجا فقط دو رشته‌ی خاص («پیدا نشد» و «لطفاً نام محصول») حذف
+      // می‌شدند و هر پیام خطای دیگری (مثل «مشکلی پیش آمد») به اشتباه
+      // به‌عنوان یک پاسخ معتبر به کاربر نشان داده می‌شد.
+      if (products && products.startsWith("🌸 محصولات پیدا شده")) {
         return {
           success: true,
           type: "product",
@@ -143,6 +174,9 @@ export async function aiRouter({
           language,
         };
       }
+      // در غیر این‌صورت (پیدا نشد/خطا/کلیدواژه خالی) از حلقه ادامه
+      // می‌دهیم تا Groq با توجه به کل مکالمه پاسخ مناسب بدهد — نه یک
+      // پیام خطای خام دیتابیس.
     }
 
     //====================
@@ -184,6 +218,15 @@ export async function aiRouter({
       history
     );
     const groqText = groq?.choices?.[0]?.message?.content;
+
+    // گزارش مشکل به ادمین — روی محیط Cloudflare Workers که این پروژه
+    // دیپلوی می‌شود، یک Promise رهاشده (بدون await) ممکن است قبل از
+    // تمام‌شدن، همراه با پایان پاسخ کشته شود؛ برای همین عمدا await
+    // می‌شود تا گزارش واقعا گم نشود، نه اینکه فقط ارسال پاسخ به کاربر
+    // را کند کند (درج یک ردیف اعلان معمولا خیلی سریع است).
+    if (message.trim() && looksLikeIssueReport(message)) {
+      await reportIssueToAdmin(userId, message);
+    }
 
     return {
       success: true,

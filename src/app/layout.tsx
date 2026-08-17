@@ -18,6 +18,7 @@ import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import { CurrencyProvider } from "@/lib/currency";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { SiteSettingsProvider } from "@/lib/site-settings";
+import ThemeInjector from "@/components/ThemeInjector";
 import { generateOrganizationSchema, safeJsonLdString } from "@/lib/seo/schema";
 
 // قبلا هیچ‌جای اپ <Toaster/> رندر نمی‌شد، در حالی که چند صفحه (مثل
@@ -152,6 +153,7 @@ export default function RootLayout({
           <ThemeProvider>
             <CurrencyProvider>
               <SiteSettingsProvider>
+                <ThemeInjector />
                 <TopAnnouncementBar />
                 <Navbar />
                 <WelcomeSystem />

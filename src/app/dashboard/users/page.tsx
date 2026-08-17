@@ -10,6 +10,7 @@ export default function Users() {
   const supabase = createClient();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     loadUsers();
@@ -17,6 +18,7 @@ export default function Users() {
 
   async function loadUsers() {
     setLoading(true);
+    setErrorMsg("");
 
     const { data, error } = await supabase
       .from("profiles")
@@ -25,6 +27,12 @@ export default function Users() {
 
     if (error) {
       console.log("DASHBOARD USERS ERROR:", error);
+      // نکته اصلاح‌شده: قبلا خطای واقعی فقط در کنسول مرورگر (که یک
+      // مدیر عادی هیچ‌وقت باز نمی‌کند) چاپ می‌شد و لیست فقط بی‌صدا خالی
+      // نشان داده می‌شد — یعنی هیچ سرنخی از علت واقعی («لیست نمیاد»)
+      // در دسترس نبود. حالا متن خطای واقعی روی خود صفحه نمایش داده
+      // می‌شود.
+      setErrorMsg(error.message);
     }
 
     setUsers(data || []);
@@ -37,7 +45,13 @@ export default function Users() {
 
       {loading && <p>در حال بارگذاری...</p>}
 
-      {!loading && users.length === 0 && <p>کاربری یافت نشد.</p>}
+      {!loading && errorMsg && (
+        <p style={{ color: "#EF4444" }}>
+          خطا در دریافت لیست کاربران: {errorMsg}
+        </p>
+      )}
+
+      {!loading && !errorMsg && users.length === 0 && <p>کاربری یافت نشد.</p>}
 
       {!loading && users.length > 0 && (
         <table className="admin-table">

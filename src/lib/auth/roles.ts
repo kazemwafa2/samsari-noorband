@@ -6,6 +6,10 @@ export const ROLES = {
 
   SELLER: "seller",
 
+  // نقش جدید: مأمور تحویل. فقط به یک پنل محدود (/courier) دسترسی دارد؛
+  // نه به کل /dashboard.
+  COURIER: "courier",
+
   VIP: "vip",
 
   PREMIUM: "premium",

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Gem, Search, Heart, ShoppingBag, User, Bell, Menu, X } from "lucide-react";
+import { Droplet, Search, Heart, ShoppingBag, User, Bell, Menu, X } from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { CurrencySwitcher } from "@/components/shared/CurrencySwitcher";
@@ -97,7 +97,8 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="site-navbar">
+    <>
+      <header className="site-navbar">
       <div className="navbar-inner">
         <Link href="/" className="navbar-logo">
           <span className="navbar-logo-icon">
@@ -105,14 +106,13 @@ export default function Navbar() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logoUrl} alt="NOORBAND Jaghori" className="navbar-logo-img" />
             ) : (
-              <Gem size={20} />
+              <Droplet size={20} fill="currentColor" />
             )}
           </span>
           نوربند جاغوری
         </Link>
 
         <form className="navbar-search" onSubmit={handleSearch}>
-          <Search size={18} />
           <input
             type="search"
             placeholder={t("searchPlaceholder", language)}
@@ -121,6 +121,9 @@ export default function Navbar() {
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
           />
+          <button type="submit" className="navbar-search-submit" aria-label={t("search", language)}>
+            <Search size={16} />
+          </button>
 
           {showSuggestions && query.trim().length >= 2 && (
             <div className="navbar-search-suggestions">
@@ -210,13 +213,15 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="navbar-mobile">
           <form className="navbar-search" onSubmit={handleSearch}>
-            <Search size={18} />
             <input
               type="search"
               placeholder={t("searchPlaceholder", language)}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
+            <button type="submit" className="navbar-search-submit" aria-label={t("search", language)}>
+              <Search size={16} />
+            </button>
           </form>
 
           <nav className="navbar-mobile-links">
@@ -234,6 +239,7 @@ export default function Navbar() {
           </div>
         </div>
       )}
-    </header>
+      </header>
+    </>
   );
 }

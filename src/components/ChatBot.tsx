@@ -13,6 +13,7 @@ import {
 
 import { getMessage } from "@/constants/messages";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import ParticleSphere from "./ParticleSphere";
 
 import {
   saveAIMemory,
@@ -227,7 +228,7 @@ export default function ChatBot() {
 
       <div className="chatbot-header">
         <div className="chatbot-header-avatar">
-          <Bot size={22} />
+          <ParticleSphere size={30} />
         </div>
 
         <div className="chatbot-header-info">

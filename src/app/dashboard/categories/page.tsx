@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Languages } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { useUserRole } from "@/hooks/use-user-role";
+import { LANGUAGES } from "@/lib/i18n/dictionaries";
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  fa: "فارسی", prs: "دری", ps: "پشتو", en: "English", ar: "العربية", fr: "Français", de: "Deutsch", tr: "Türkçe", es: "Español",
+};
 
 function slugify(text: string) {
   return text
@@ -24,6 +29,12 @@ export default function Categories() {
   const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // نکته: قبلا نام دسته‌بندی فقط یک ستون فارسی بود — یعنی کاربری با
+  // زبان سایت انگلیسی/عربی/... همیشه نام دسته‌بندی‌ها را فارسی می‌دید.
+  // این state ترجمه‌ی هر دسته را نگه می‌دارد؛ اگر ادمین برای یک زبان
+  // چیزی وارد نکند، همان نام اصلی fallback می‌شود (resolveContent.ts).
+  const [editingTranslations, setEditingTranslations] = useState<number | null>(null);
+  const [translationsDraft, setTranslationsDraft] = useState<Record<string, string>>({});
 
   useEffect(() => {
     load();
@@ -73,6 +84,26 @@ export default function Categories() {
   async function handleUpdateImage(id: number, url: string) {
     const { error } = await supabase.from("categories").update({ image_url: url }).eq("id", id);
     if (!error) load();
+  }
+
+  function openTranslations(category: any) {
+    setEditingTranslations(category.id);
+    setTranslationsDraft(category.title_translations || {});
+  }
+
+  async function saveTranslations(id: number) {
+    const { error } = await supabase
+      .from("categories")
+      .update({ title_translations: translationsDraft })
+      .eq("id", id);
+
+    if (error) {
+      alert("ذخیره ترجمه با خطا مواجه شد: " + error.message);
+      return;
+    }
+
+    setEditingTranslations(null);
+    load();
   }
 
   return (
@@ -141,6 +172,9 @@ export default function Categories() {
                 <td>{c.products?.[0]?.count ?? 0}</td>
                 {isAdmin && (
                   <td>
+                    <button className="icon-btn" onClick={() => openTranslations(c)} title="ترجمه‌های نام دسته‌بندی">
+                      <Languages size={18} color="#8B5CF6" />
+                    </button>
                     <button className="icon-btn" onClick={() => handleDelete(c.id)} title="حذف">
                       <Trash2 size={18} color="#EF4444" />
                     </button>
@@ -150,6 +184,37 @@ export default function Categories() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {editingTranslations !== null && (
+        <div className="glass-card space-y-3">
+          <h2>🌐 ترجمه نام دسته‌بندی به زبان‌های دیگر</h2>
+          <p style={{ color: "#6B7280" }}>
+            هر زبانی که خالی بماند، همان نام اصلی (فارسی) به‌جایش نمایش داده می‌شود.
+          </p>
+
+          {LANGUAGES.filter((l) => l !== "fa").map((lang) => (
+            <div key={lang}>
+              <label>{LANGUAGE_LABELS[lang]}</label>
+              <input
+                type="text"
+                value={translationsDraft[lang] || ""}
+                onChange={(e) =>
+                  setTranslationsDraft((prev) => ({ ...prev, [lang]: e.target.value }))
+                }
+              />
+            </div>
+          ))}
+
+          <div className="flex gap-3">
+            <button className="primary-btn" onClick={() => saveTranslations(editingTranslations)}>
+              ذخیره ترجمه‌ها
+            </button>
+            <button className="outline-btn" onClick={() => setEditingTranslations(null)} type="button">
+              انصراف
+            </button>
+          </div>
+        </div>
       )}
     </main>
   );

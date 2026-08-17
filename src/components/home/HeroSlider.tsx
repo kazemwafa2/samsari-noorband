@@ -18,6 +18,12 @@ interface Slide {
   secondaryLabel: string;
   secondaryHref: string;
   Icon: typeof Gem;
+  // نکته اصلاح‌شده: بنرهایی که از پنل (/dashboard/banners) با زون
+  // «hero» ساخته می‌شدند، عکس اختصاصی خودشان را داشتند (ستون image در
+  // جدول banners) ولی این عکس هیچ‌وقت اینجا خوانده نمی‌شد — یعنی هر چند
+  // بنر که ادمین با عکس‌های مختلف می‌ساخت، همه فقط یک عکس ثابت سراسری
+  // (heroImageUrl از تنظیمات برندینگ) یا آیکون پیش‌فرض را نشان می‌دادند.
+  image?: string | null;
 }
 
 export default function HeroSlider() {
@@ -52,6 +58,7 @@ export default function HeroSlider() {
             secondaryLabel: t("categories", language),
             secondaryHref: "/categories",
             Icon: Tag,
+            image: b.image,
           }))
         );
       });
@@ -148,9 +155,9 @@ export default function HeroSlider() {
         </div>
 
         <div className="hero-slide-visual" aria-hidden="true">
-          {heroImageUrl ? (
+          {slide.image || heroImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={heroImageUrl} alt="" className="hero-slide-photo" />
+            <img src={slide.image || heroImageUrl} alt="" className="hero-slide-photo" />
           ) : (
             <div className="hero-visual-ring">
               <Icon size={64} strokeWidth={1.4} />

@@ -176,6 +176,13 @@ create table if not exists categories (
 -- عکس واقعی محصول/دسته استفاده می‌کرد.
 alter table categories add column if not exists image_url text;
 
+-- ترجمه‌ی نام دسته‌بندی به هفت زبان سایت. قبلا فقط یک ستون title (فارسی)
+-- وجود داشت، یعنی برای هر کاربری با زبان غیر از فارسی/دری، نام
+-- دسته‌بندی‌ها همیشه فارسی می‌ماند. اگر برای یک زبان ترجمه وارد نشده
+-- باشد، همان title اصلی به‌عنوان fallback نمایش داده می‌شود — یعنی هیچ
+-- دسته‌بندی‌ای هیچ‌وقت خالی نمی‌ماند.
+alter table categories add column if not exists title_translations jsonb not null default '{}'::jsonb;
+
 create table if not exists brands (
   id bigint generated always as identity primary key,
   title text not null,
@@ -638,7 +645,7 @@ create table if not exists notifications (
   title text not null,
   message text not null,
   type text not null default 'system'
-    check (type in ('order','payment','discount','wishlist','product','delivery','account','system')),
+    check (type in ('order','payment','discount','wishlist','product','delivery','account','system','support')),
   is_read boolean not null default false,
   link text,
   created_at timestamptz not null default now(),
@@ -683,6 +690,31 @@ alter table site_settings add column if not exists store_image_night_url text;
 -- روی زمینه گل) کنار متن اسلایدر دارد؛ قبلا اسلایدر فقط متن و آیکون
 -- بود، هیچ عکسی نداشت.
 alter table site_settings add column if not exists hero_image_url text;
+
+-- گالری چند-عکسی آدرس دوکان (قبلا فقط یک عکس روز + یک عکس شب بود؛
+-- کاربر خواسته چند عکس مختلف از دوکان نمایش داده شود)
+alter table site_settings add column if not exists store_gallery_urls jsonb not null default '[]'::jsonb;
+
+-- لینک‌های شبکه‌های اجتماعی + شماره واتساپ، از پنل مدیریت (قبلا این‌ها
+-- در کد src/constants/site.ts هارد‌کد بودند)
+alter table site_settings add column if not exists social_facebook text;
+alter table site_settings add column if not exists social_instagram text;
+alter table site_settings add column if not exists social_whatsapp text;
+
+-- این‌که کدام شبکه‌ها به‌صورت بارکد روی فاکتور چاپ شوند، از پنل قابل
+-- انتخاب است (چک‌باکس‌های facebook/instagram/whatsapp)
+alter table site_settings add column if not exists invoice_barcode_platforms jsonb not null default '["whatsapp"]'::jsonb;
+
+-- ویدیوی تبلیغاتی صفحه اصلی، از پنل مدیریت قابل تنظیم/تعویض
+alter table site_settings add column if not exists promo_video_url text;
+alter table site_settings add column if not exists promo_video_enabled boolean not null default false;
+
+-- تم/رنگ‌بندی کل سایت از پنل «تنظیمات ظاهری» — یک JSON با کلیدهایی مثل
+-- primary, secondary, background, cardBg, buttonText, glassOpacity که
+-- در زمان اجرا به‌صورت CSS custom properties روی <html> اعمال می‌شوند
+-- (src/components/ThemeInjector.tsx). اگر خالی باشد، همان رنگ‌بندی
+-- پیش‌فرض کد (globals.css) دست‌نخورده باقی می‌ماند.
+alter table site_settings add column if not exists theme jsonb not null default '{}'::jsonb;
 
 create table if not exists addresses (
   id bigint generated always as identity primary key,
@@ -1015,12 +1047,32 @@ create policy "orders_select_own_or_admin" on orders
     or exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','super_admin'))
   );
 
+-- نکته: یک policy عمومی `using (true)` روی SELECT اینجا اضافه نشد،
+-- چون Postgres چند policy مجاز روی یک عملیات را با OR ترکیب می‌کند —
+-- یعنی چنین چیزی کل جدول orders (آدرس/تلفن/همه چیز هر مشتری) را برای
+-- هر بازدیدکننده‌ی ناشناس در هر کوئری‌ای باز می‌کرد، نه فقط برای
+-- پیگیری با شماره سفارش. به‌جایش، رهگیری مهمان از طریق یک تابع محدود
+-- (track_order_by_number پایین همین فایل) انجام می‌شود که فقط دقیقا
+-- با شماره سفارش کار می‌کند و فقط فیلدهای غیرحساس را برمی‌گرداند.
+
 create policy "orders_insert_own" on orders
   for insert with check (auth.uid() = user_id);
 
+-- نکته اصلاح‌شده: قبلا این Policy فقط admin/super_admin را برای تغییر
+-- وضعیت سفارش مجاز می‌کرد. اما dashboard/layout.tsx به SELLER هم اجازه
+-- ورود به /dashboard/orders را می‌دهد و از همان صفحه سعی می‌کند وضعیت
+-- سفارش را عوض کند — یعنی برای فروشنده، این تغییر همیشه توسط RLS بی‌صدا
+-- رد می‌شد (بدون خطا، چون UPDATE با ۰ ردیف تطبیق‌یافته یک خطای واقعی
+-- برنمی‌گرداند)؛ در حالی‌که رابط کاربری چون state را خوش‌بینانه به‌روز
+-- می‌کرد، به نظر می‌رسید کار «انجام شد» ولی در دیتابیس هیچ‌چیز ذخیره
+-- نمی‌شد. این همان «هیچ کاری از پنل انجام نمی‌شه» بود.
+-- drop-if-exists اضافه شد تا این فایل روی یک دیتابیس که قبلا یک‌بار
+-- schema.sql را اجرا کرده، دوباره بدون خطای «policy already exists»
+-- قابل اجرا باشد.
+drop policy if exists "orders_update_admin_only" on orders;
 create policy "orders_update_admin_only" on orders
   for update using (
-    exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','super_admin'))
+    exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','super_admin','seller'))
   );
 
 -- --- ORDER_ITEMS / HISTORY: تابع سفارش والد را چک می‌کند
@@ -1811,3 +1863,137 @@ create policy "Users delete own avatar" on storage.objects
     and (auth.uid())::text = (storage.foldername(name))[1]
   );
 -- =====================================================================
+
+-- =====================================================================
+-- مأمور تحویل (courier) + تایید کد تحویل
+-- =====================================================================
+-- ستون واگذاری سفارش به یک مأمور تحویل مشخص (اختیاری — اگر پر نباشد،
+-- هر مأمور تحویل می‌تواند سفارش‌های در وضعیت shipping را ببیند)
+alter table orders add column if not exists assigned_courier_id uuid references profiles(id);
+
+drop policy if exists "orders_select_courier" on orders;
+create policy "orders_select_courier" on orders
+  for select using (
+    exists (
+      select 1 from profiles p
+      where p.id = auth.uid()
+        and p.role = 'courier'
+        and (orders.assigned_courier_id = auth.uid() or orders.status = 'shipping')
+    )
+  );
+
+-- تابع امن تایید کد تحویل: به‌جای دادن دسترسی مستقیم UPDATE به مأمور
+-- تحویل روی جدول orders (که ریسک تغییر فیلدهای دیگر را دارد)، این تابع
+-- فقط دقیقا همین یک کار را انجام می‌دهد: اگر کد وارد‌شده با کد واقعی
+-- سفارش یکی بود، تحویل را ثبت می‌کند؛ وگرنه false برمی‌گرداند. SECURITY
+-- DEFINER یعنی خودش با دسترسی کامل اجرا می‌شود، ولی از داخل فقط با
+-- نقش courier/admin/super_admin قابل فراخوانی است.
+create or replace function verify_delivery_code(p_order_id bigint, p_code text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_role text;
+  v_real_code text;
+  v_user_id uuid;
+begin
+  select role into v_role from profiles where id = auth.uid();
+
+  if v_role is null or v_role not in ('courier','admin','super_admin') then
+    raise exception 'دسترسی غیرمجاز';
+  end if;
+
+  select delivery_code, user_id into v_real_code, v_user_id
+  from orders where id = p_order_id;
+
+  if v_real_code is null then
+    return false;
+  end if;
+
+  if v_real_code <> trim(p_code) then
+    return false;
+  end if;
+
+  update orders
+  set delivery_code_verified = true,
+      status = 'completed',
+      order_status = 'completed',
+      delivery_status = 'delivered',
+      delivered_at = now(),
+      updated_at = now()
+  where id = p_order_id;
+
+  insert into order_status_history (order_id, status, changed_by)
+  values (p_order_id, 'completed', auth.uid());
+
+  if v_user_id is not null then
+    insert into notifications (user_id, title, message, type)
+    values (
+      v_user_id,
+      'سفارش تحویل داده شد',
+      'سفارش شما با موفقیت تحویل داده شد. از خرید شما سپاسگزاریم 💗',
+      'delivery'
+    );
+  end if;
+
+  return true;
+end;
+$$;
+
+grant execute on function verify_delivery_code(bigint, text) to authenticated;
+
+-- تابع امن رهگیری مهمان با شماره سفارش: بدون نیاز به لاگین، فقط با
+-- دانستن دقیق order_number (که مثل یک رمز یک‌بارمصرف ۵ رقمی تصادفی در
+-- آخرش دارد و فقط از طریق فاکتور/پیامک به مشتری می‌رسد) قابل استفاده
+-- است، و فقط فیلدهای غیرحساس (نه آدرس/تلفن/user_id) را برمی‌گرداند —
+-- برخلاف یک RLS policy عمومی که کل جدول را باز می‌کرد.
+create or replace function track_order_by_number(p_order_number text)
+returns table (
+  order_number text,
+  status text,
+  total_amount numeric,
+  created_at timestamptz
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select o.order_number, o.status, o.total_amount, o.created_at
+  from orders o
+  where o.order_number = p_order_number
+  limit 1;
+$$;
+
+grant execute on function track_order_by_number(text) to anon, authenticated;
+
+-- گزارش مشکل توسط چت‌بات به ادمین: وقتی کاربر در گفتگو با NOORBAND AI
+-- از مشکلی شکایت می‌کند (مثلا «سایت خراب است»، «سفارشم نرسیده»)،
+-- این تابع برای همه‌ی ادمین‌ها/سوپرادمین‌ها یک اعلان می‌سازد. INSERT
+-- مستقیم روی notifications برای این کار مجاز نیست (چون owner_only
+-- فقط اجازه می‌دهد کاربر برای خودش بنویسد)، پس یک تابع امن جداگانه.
+create or replace function report_issue_to_admin(p_message text, p_reporter_id uuid default null)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_admin record;
+begin
+  for v_admin in
+    select id from profiles where role in ('admin','super_admin')
+  loop
+    insert into notifications (user_id, title, message, type)
+    values (
+      v_admin.id,
+      '🚨 گزارش مشکل از چت‌بات',
+      p_message,
+      'support'
+    );
+  end loop;
+end;
+$$;
+
+grant execute on function report_issue_to_admin(text, uuid) to anon, authenticated;

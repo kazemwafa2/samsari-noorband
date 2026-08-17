@@ -156,6 +156,27 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // محافظت پنل مأمور تحویل — عمدا جدا از /dashboard نگه داشته شده تا
+  // مأمور تحویل فقط به همین صفحه‌ی محدود دسترسی داشته باشد، نه کل
+  // پنل مدیریت (محصولات/کاربران/تنظیمات)
+  if (pathname.startsWith("/courier")) {
+    if (!user) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role,is_active")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const allowedRoles = [ROLES.COURIER, ROLES.ADMIN, ROLES.SUPER_ADMIN];
+
+    if (!profile || !profile.is_active || !allowedRoles.includes(profile.role)) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  }
+
   // --------------------------------------------------------------
   // اگر آدرس با پیشوند زبان بود (مثلا /fr/products/5)، همین الان که
   // مطمئن شدیم مجاز است، آن را داخلی به مسیر واقعی (/products/5)
@@ -179,6 +200,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/courier/:path*",
     "/checkout/:path*",
     "/site/:path*",
     "/products/:path*",
