@@ -1,30 +1,33 @@
-export interface User{
+export interface User {
+  id: string;
 
-id:string;
+  name: string;
 
-name:string;
+  email: string;
 
-email:string;
+  avatar?: string;
 
-avatar?:string;
+  phone?: string;
 
-phone?:string;
+  address?: string;
 
-address?:string;
+  language?: string;
 
-language?:string;
+  currency?: string;
 
-currency?:string;
+  is_verified: boolean;
 
-is_verified:boolean;
+  is_active: boolean;
 
-role:
-| "admin"
-| "customer"
-| "moderator";
+  role:
+    | "admin"
+    | "super_admin"
+    | "customer"
+    | "moderator"
+    | "seller"
+    | "courier";
 
-created_at:string;
+  created_at: string;
 
-updated_at?:string;
-
+  updated_at?: string;
 }
