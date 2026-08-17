@@ -6,7 +6,6 @@ import {
   LANGUAGE_DIRECTION,
   stripLocaleFromPath,
   getLocalizedPath,
-  detectLanguageFromBrowser,
   type Language,
 } from "./dictionaries";
 
@@ -45,24 +44,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // اولویت ۳: زبان واقعی گوشی/مرورگر کاربر (navigator.language).
-    // قبلا اینجا اصلا خوانده نمی‌شد و مستقیم به حدس جغرافیایی (اولویت
-    // بعدی) می‌رفت — یعنی کاربری که مثلا الان در ایران است ولی زبان
-    // گوشی‌اش انگلیسی (یا هر زبان دیگر پشتیبانی‌شده) است، به‌غلط
-    // فارسی می‌دید، چون IP روی ایران تشخیص داده می‌شد. حالا سیگنال
-    // واقعی‌تر (زبان خود گوشی/مرورگر) اول بررسی می‌شود؛ جغرافیا فقط
-    // وقتی به کار می‌آید که زبان مرورگر اصلا در لیست زبان‌های
-    // پشتیبانی‌شده‌ی سایت نباشد.
-    const browserLang = detectLanguageFromBrowser(navigator.language);
-    if (browserLang) {
-      applyLanguage(browserLang);
-      return;
-    }
-
-    // اولویت ۴: تشخیص جغرافیایی (کوکی noorband-geo-lang که middleware.ts
+    // اولویت ۳: تشخیص جغرافیایی (کوکی noorband-geo-lang که middleware.ts
     // از روی کشور واقعی بازدیدکننده — نه مرورگرش — ست می‌کند: ایران →
-    // فارسی، در غیر این‌صورت دری). این فقط وقتی به کار می‌رود که زبان
-    // مرورگر/گوشی کاربر قابل‌تشخیص نبود.
+    // فارسی، در غیر این‌صورت دری). این خیلی دقیق‌تر از حدس زبان مرورگر
+    // است چون کاربران زیادی مرورگرشان را تنظیم نکرده‌اند.
     const geoMatch = document.cookie.match(/(?:^|; )noorband-geo-lang=([^;]+)/);
     if (geoMatch) {
       const geoLang = decodeURIComponent(geoMatch[1]) as Language;
@@ -72,7 +57,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // اولویت ۵ (پیش‌فرض نهایی): اگر هیچ‌کدام از موارد بالا در دسترس
+    // اولویت ۴ (پیش‌فرض نهایی): اگر هیچ‌کدام از موارد بالا در دسترس
     // نبود (مثلا کوکی هنوز ست نشده)، دری — زبان کامل و پیش‌فرض سایت.
     applyLanguage("prs");
     // eslint-disable-next-line react-hooks/exhaustive-deps

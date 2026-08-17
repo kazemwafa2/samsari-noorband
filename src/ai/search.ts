@@ -109,33 +109,13 @@ export async function searchProductAI(message: string): Promise<string> {
     return "لطفاً نام محصول مورد نظر را وارد کنید.";
   }
 
-  // نکته اصلاح‌شده: فیلتر .or() ساپابیس/PostgREST از کاما برای جدا کردن
-  // چند شرط استفاده می‌کند (title.ilike.%x%,description.ilike.%x%,...).
-  // قبلا کلیدواژه بدون هیچ پاک‌سازی‌ای مستقیم داخل این رشته می‌رفت؛ یعنی
-  // اگر پیام کاربر خودش کاما، پرانتز یا % داشت (مثلا یک جمله کامل
-  // انگلیسی مثل "Where am I from, what language is my phone, and what
-  // time is it?")، رشته فیلتر از هم می‌پاشید و PostgREST خطا می‌داد —
-  // که همان پیام «در جستجوی محصولات مشکلی پیش آمد» را برمی‌گرداند، حتی
-  // برای پیام‌هایی که اصلا ربطی به جستجوی محصول نداشتند.
-  const sanitizedKeyword = keyword
-    .replace(/[,()%]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 60);
-
-  if (!sanitizedKeyword) {
-    return "لطفاً نام محصول مورد نظر را وارد کنید.";
-  }
-
   // نکته اصلاح‌شده: قبلا این کوئری از ستون‌های name/description/category
   // استفاده می‌کرد که با schema واقعی (title, نه name) هماهنگ نبود —
   // یعنی این جستجو همیشه نتیجه خالی برمی‌گرداند، حتی وقتی محصول موجود بود.
   const { data, error } = await supabase
     .from("products")
     .select("id, title, description, price, category, stock")
-    .or(
-      `title.ilike.%${sanitizedKeyword}%,description.ilike.%${sanitizedKeyword}%,category.ilike.%${sanitizedKeyword}%`
-    )
+    .or(`title.ilike.%${keyword}%,description.ilike.%${keyword}%,category.ilike.%${keyword}%`)
     .eq("is_available", true)
     .limit(5);
 
@@ -145,7 +125,7 @@ export async function searchProductAI(message: string): Promise<string> {
   }
 
   if (!data || data.length === 0) {
-    return `محصولی با نام "${sanitizedKeyword}" پیدا نشد 🌸`;
+    return `محصولی با نام "${keyword}" پیدا نشد 🌸`;
   }
 
   let result = "🌸 محصولات پیدا شده:\n\n";
@@ -190,22 +170,12 @@ function extractKeyword(message: string) {
     "نمایش",
     "محصول",
     "محصولات",
-    // چند کلمه پرکاربرد انگلیسی هم اضافه شد تا کلیدواژه‌ی استخراج‌شده
-    // برای پیام‌های انگلیسی هم تمیزتر باشد (قبلا این تابع فقط کلمات
-    // فارسی/دری را حذف می‌کرد و کل جمله انگلیسی دست‌نخورده باقی می‌ماند)
-    "do you have",
-    "i want",
-    "please",
-    "price of",
-    "show me",
-    "product",
-    "products",
   ];
 
   let keyword = message;
 
   words.forEach((word) => {
-    keyword = keyword.replace(new RegExp(word, "gi"), "");
+    keyword = keyword.replace(word, "");
   });
 
   return keyword.trim();

@@ -57,7 +57,7 @@ export function getLocalizedPath(currentPathname: string, targetLanguage: Langua
   return rest === "/" ? `/${targetLanguage}` : `/${targetLanguage}${rest}`;
 }
 
-export function detectLanguageFromBrowser(browserLocale: string): Language | null {
+export function detectLanguageFromBrowser(browserLocale: string): Language {
   const code = browserLocale.toLowerCase().split("-")[0];
 
   const map: Record<string, Language> = {
@@ -75,13 +75,7 @@ export function detectLanguageFromBrowser(browserLocale: string): Language | nul
     // مستقل ندارد، بلکه از آلمانی/فرانسوی/ایتالیایی استفاده می‌کند.
   };
 
-  // قبلا این تابع وقتی زبان مرورگر ناشناخته بود، به‌صورت خاموش "prs"
-  // برمی‌گرداند — یعنی فراخوان نمی‌توانست تشخیص بدهد که آیا واقعا زبان
-  // مرورگر دری تشخیص داده شده یا صرفا یک پیش‌فرض بی‌معنا برگشته. حالا
-  // در نبود تطبیق واقعی null برمی‌گرداند تا فراخوان (LanguageProvider)
-  // بتواند در آن حالت به مرحله بعدی (تشخیص جغرافیایی) برود، نه اینکه
-  // کورکورانه دری را جایگزین سیگنال واقعی‌تر جغرافیا کند.
-  return map[code] || null;
+  return map[code] || "prs";
 }
 
 // نکته درباره «دری» (prs): دری و فارسی همان یک زبان با تفاوت‌های
