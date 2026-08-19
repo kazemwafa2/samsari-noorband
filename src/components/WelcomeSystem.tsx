@@ -1,24 +1,26 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { getMessage } from "@/constants/messages";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { t } from "@/lib/i18n/dictionaries";
 import { getTodaysSeasonalMessage } from "@/lib/seasonal-messages";
 
-// قبلا این پیام‌ها همیشه با MESSAGES.KEY.fa (فارسی/دری ثابت) نمایش
-// داده می‌شدند، حتی اگر کاربر زبان دیگری (مثلا انگلیسی) انتخاب کرده
-// بود — یعنی یک کاربر غیرفارسی‌زبان چیزی نمی‌فهمید. حالا با
-// getMessage(key, language) پیام دقیقا با زبان فعلی سایت هماهنگ است.
-//
-// نکته: این افکت باید فقط یک‌بار در طول عمر صفحه اجرا شود (نه هر بار
-// که کاربر زبان را عوض می‌کند)، برای همین با shownRef فقط اولین اجرا
-// را مجاز می‌کنیم — ولی چون به language وابسته است، همان مقدار
-// درست‌شده (نه همیشه دری پیش‌فرض اولیه) استفاده می‌شود.
+// نکته اصلاح‌شده: قبلا این پیام‌ها با alert() خام مرورگر نمایش داده
+// می‌شدند. alert() یک دیالوگ سطح مرورگر است، نه بخشی از ظاهر سایت —
+// برای همین همیشه یک خط «آدرس‌سایت says» بالای پیام نشان می‌دهد که
+// هیچ راهی برای حذفش از کد سایت وجود ندارد (این رفتار خودِ مرورگر
+// است، نه چیزی که ما ساخته باشیم). خود متن پیام هم از قبل با
+// getMessage(key, language) به‌درستی چندزبانه بود، اما چون از طریق
+// alert() نمایش داده می‌شد، تجربه‌اش شکسته و غیرحرفه‌ای به نظر می‌رسید.
+// حالا با یک کارت خوش‌آمدگویی سفارشی (هماهنگ با ظاهر بقیه سایت)
+// جایگزین شد — بدون هیچ خط آدرس سایتی.
 export default function WelcomeSystem() {
   const { language } = useLanguage();
   const shownRef = useRef(false);
+  const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (shownRef.current) return;
@@ -27,10 +29,10 @@ export default function WelcomeSystem() {
     const firstVisit = localStorage.getItem("noorband-user");
 
     if (!firstVisit) {
-      alert(getMessage("FIRST_VISIT_MESSAGE", language));
+      setWelcomeMessage(getMessage("FIRST_VISIT_MESSAGE", language));
       localStorage.setItem("noorband-user", "true");
     } else {
-      alert(getMessage("WELCOME_BACK_MESSAGE", language));
+      setWelcomeMessage(getMessage("WELCOME_BACK_MESSAGE", language));
     }
   }, [language]);
 
@@ -67,5 +69,19 @@ export default function WelcomeSystem() {
     }
   }, [language]);
 
-  return null;
+  if (!welcomeMessage) return null;
+
+  return (
+    <div className="quick-view-overlay" onClick={() => setWelcomeMessage(null)}>
+      <div
+        className="welcome-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="welcome-modal-text">{welcomeMessage}</p>
+        <button className="primary-btn" onClick={() => setWelcomeMessage(null)}>
+          {t("okButtonLabel", language)}
+        </button>
+      </div>
+    </div>
+  );
 }

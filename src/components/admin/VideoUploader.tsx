@@ -40,6 +40,29 @@ export function VideoUploader({ value, onUploaded, folder = "promo" }: VideoUplo
 
     onUploaded(getImagePublicUrl(path, "videos"));
     e.currentTarget.value = "";
+
+    // نکته اصلاح‌شده: قبلا بعد از آپلود موفق (که فقط یعنی فایل روی
+    // Storage نوشته شد)، هیچ بررسی نمی‌شد که آیا لینک عمومی واقعا قابل
+    // دسترسی است یا نه. اگر باکت «videos» در Supabase روی Public تنظیم
+    // نشده باشد، آپلود ظاهرا موفق است ولی لینک نهایی برای هیچکس (حتی
+    // خود ادمین) قابل پخش نیست — دقیقا همان «آیکون شکسته» که در پنل
+    // دیده می‌شود. این بررسی همان لحظه به ادمین اطلاع می‌دهد، به‌جای
+    // اینکه بعدا در صفحه اصلی به‌صورت یک ویدیوی خراب کشف شود.
+    const publicUrl = getImagePublicUrl(path, "videos");
+    try {
+      const check = await fetch(publicUrl, { method: "HEAD" });
+      if (!check.ok) {
+        setError(
+          "فایل آپلود شد ولی لینک آن در دسترس نیست (خطای " + check.status + "). " +
+          "احتمالا باکت «videos» در Supabase Storage روی Public تنظیم نشده — " +
+          "به Supabase → Storage → videos بروید و گزینه‌ی Public bucket را فعال کنید."
+        );
+      }
+    } catch {
+      setError(
+        "فایل آپلود شد ولی بررسی دسترسی به لینک آن ممکن نشد. مطمئن شوید باکت «videos» در Supabase Storage ساخته و Public شده باشد."
+      );
+    }
   }
 
   async function handleRemove() {

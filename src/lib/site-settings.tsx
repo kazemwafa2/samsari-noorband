@@ -18,8 +18,14 @@ export interface ThemeSettings {
   btnGradientStart?: string;
   btnGradientEnd?: string;
   btnText?: string;
-  glassOpacity?: string; // مثلا "0.55"
+  glassOpacity?: string; // مثلا "0.55" — نسخه قدیمی، هنوز پشتیبانی می‌شود
   heroMinHeight?: string; // مثلا "340px"
+  // فیلدهای جدید برای سبک‌های مختلف شیشه (مثلا شیشه یخی) — درخواست
+  // کاربر: «این گلاس را روی تنظیمات سایت اضافه کن تا بعدا بتوانم تم و
+  // گلاس شیشه‌ای را به این شکل تبدیل کنم»
+  glassBg?: string; // مثلا "rgba(224,242,254,.6)"
+  glassBorder?: string; // مثلا "rgba(186,230,253,.7)"
+  glassBlur?: string; // مثلا "24px"
 }
 
 interface SiteSettingsValue {

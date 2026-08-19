@@ -26,6 +26,104 @@ const FIELDS: { key: keyof ThemeSettings; label: string; type: "color" | "text" 
   { key: "btnText", label: "رنگ متن دکمه‌ها", type: "color" },
 ];
 
+// پیش‌فرض‌های آماده‌ی «سبک شیشه» — درخواست کاربر: «این گلاس یخی را
+// اضافه کن تا بعدا بتوانم بعدا تم را به این شکل تبدیل کنم، چند تا
+// گلاس دیگه هم خودت اضافه کن، حالت شب/روز هر کدام را خودت انتخاب کن».
+// هر پیش‌فرض یک ترکیب هماهنگ از رنگ پس‌زمینه/متن/دکمه + گلاس شیشه‌ای
+// است، نه فقط رنگ گلاس تنها — چون یک گلاس یخی روی پس‌زمینه‌ی صورتی
+// قبلی هماهنگ به‌نظر نمی‌رسید.
+interface GlassPreset {
+  id: string;
+  label: string;
+  description: string;
+  mode: "light" | "dark";
+  swatch: string; // گرادیان برای پیش‌نمایش کارت
+  theme: ThemeSettings;
+}
+
+const GLASS_PRESETS: GlassPreset[] = [
+  {
+    id: "ice",
+    label: "❄️ شیشه یخی",
+    description: "روشن، سرد و بلوری — دقیقا همان سبکی که فرستادید",
+    mode: "light",
+    swatch: "linear-gradient(135deg,#38BDF8,#0284C7)",
+    theme: {
+      primary: "#0284C7",
+      secondary: "#38BDF8",
+      background: "#EFF8FF",
+      cardBg: "#FFFFFF",
+      darkText: "#0C4A6E",
+      btnGradientStart: "#0EA5E9",
+      btnGradientEnd: "#38BDF8",
+      btnText: "#FFFFFF",
+      glassBg: "rgba(224,242,254,.55)",
+      glassBorder: "rgba(186,230,253,.8)",
+      glassBlur: "26px",
+    },
+  },
+  {
+    id: "rose",
+    label: "🌸 شیشه صورتی",
+    description: "روشن و ملایم — هماهنگ با هدر/بنر صورتی فعلی سایت",
+    mode: "light",
+    swatch: "linear-gradient(135deg,#F472B6,#EC4899)",
+    theme: {
+      primary: "#EC4899",
+      secondary: "#F472B6",
+      background: "#FFF5F8",
+      cardBg: "#FFFFFF",
+      darkText: "#831843",
+      btnGradientStart: "#EC4899",
+      btnGradientEnd: "#DB2777",
+      btnText: "#FFFFFF",
+      glassBg: "rgba(253,242,248,.6)",
+      glassBorder: "rgba(251,207,232,.7)",
+      glassBlur: "20px",
+    },
+  },
+  {
+    id: "gold-night",
+    label: "🌙 شیشه طلایی شبانه",
+    description: "تیره و لوکس — برای حس گرم و شبانه",
+    mode: "dark",
+    swatch: "linear-gradient(135deg,#FBBF24,#1C1508)",
+    theme: {
+      primary: "#F59E0B",
+      secondary: "#FBBF24",
+      background: "#1C1508",
+      cardBg: "#2A2011",
+      darkText: "#FDE9C0",
+      btnGradientStart: "#F59E0B",
+      btnGradientEnd: "#FBBF24",
+      btnText: "#1C1508",
+      glassBg: "rgba(41,32,15,.55)",
+      glassBorder: "rgba(251,191,36,.25)",
+      glassBlur: "22px",
+    },
+  },
+  {
+    id: "purple-night",
+    label: "🌌 شیشه بنفش شبانه",
+    description: "تیره و آرام — هماهنگ با رنگ اصلی برند نوربند",
+    mode: "dark",
+    swatch: "linear-gradient(135deg,#C084FC,#120E1F)",
+    theme: {
+      primary: "#8B5CF6",
+      secondary: "#C084FC",
+      background: "#120E1F",
+      cardBg: "#1E1830",
+      darkText: "#EDE9FE",
+      btnGradientStart: "#8B5CF6",
+      btnGradientEnd: "#C084FC",
+      btnText: "#FFFFFF",
+      glassBg: "rgba(30,24,48,.55)",
+      glassBorder: "rgba(196,181,253,.2)",
+      glassBlur: "22px",
+    },
+  },
+];
+
 export default function AppearanceSettings() {
   const supabase = createClient();
   const { refresh } = useSiteSettings();
@@ -54,6 +152,10 @@ export default function AppearanceSettings() {
 
   function update(key: keyof ThemeSettings, value: string) {
     setTheme((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function applyPreset(preset: GlassPreset) {
+    setTheme(preset.theme);
   }
 
   async function save() {
@@ -105,6 +207,30 @@ export default function AppearanceSettings() {
       </p>
 
       <div className="glass-card space-y-4">
+        <h2>🧊 سبک‌های آماده شیشه</h2>
+        <p style={{ color: "#6B7280" }}>
+          روی هرکدام بزنید تا همه‌ی رنگ‌ها/گلاس پایین این صفحه با آن هماهنگ شود؛ بعد می‌توانید دستی هم تنظیمشان کنید.
+          فقط انتخاب کردن ذخیره نمی‌کند — در آخر «ذخیره و اعمال» را بزنید.
+        </p>
+
+        <div className="glass-preset-grid">
+          {GLASS_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              className="glass-preset-card"
+              onClick={() => applyPreset(preset)}
+            >
+              <span className="glass-preset-swatch" style={{ background: preset.swatch }} />
+              <strong>{preset.label}</strong>
+              <span className="glass-preset-desc">{preset.description}</span>
+              <span className="glass-preset-mode">{preset.mode === "dark" ? "🌙 مناسب حالت تاریک" : "☀️ مناسب حالت روشن"}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="glass-card space-y-4">
         {FIELDS.map((field) => (
           <div key={field.key} className="flex items-center gap-3" style={{ justifyContent: "space-between" }}>
             <label>{field.label}</label>
@@ -128,17 +254,31 @@ export default function AppearanceSettings() {
       </div>
 
       <div className="glass-card space-y-4">
-        <h2>شفافیت گلاس شیشه‌ای</h2>
-        <p style={{ color: "#6B7280" }}>عددی بین 0 (کاملا شفاف) تا 1 (کاملا مات) — پیش‌فرض حدود 0.55</p>
+        <h2>🧊 تنظیمات دقیق گلاس شیشه‌ای</h2>
+
+        <label>رنگ/شفافیت پس‌زمینه گلاس (مثلا rgba(224,242,254,.55))</label>
         <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.05"
-          value={theme.glassOpacity ? Number(theme.glassOpacity) : 0.55}
-          onChange={(e) => update("glassOpacity", e.target.value)}
+          type="text"
+          value={theme.glassBg || ""}
+          onChange={(e) => update("glassBg", e.target.value)}
+          placeholder="rgba(255,255,255,.55)"
         />
-        <span>{theme.glassOpacity || "0.55"}</span>
+
+        <label>رنگ حاشیه گلاس (مثلا rgba(186,230,253,.8))</label>
+        <input
+          type="text"
+          value={theme.glassBorder || ""}
+          onChange={(e) => update("glassBorder", e.target.value)}
+          placeholder="rgba(255,255,255,.35)"
+        />
+
+        <label>میزان بلور گلاس (مثلا 22px)</label>
+        <input
+          type="text"
+          value={theme.glassBlur || ""}
+          onChange={(e) => update("glassBlur", e.target.value)}
+          placeholder="22px"
+        />
       </div>
 
       <div className="glass-card space-y-4">

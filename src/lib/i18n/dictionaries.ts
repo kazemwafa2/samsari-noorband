@@ -477,6 +477,7 @@ export const dictionaries: Record<string, Partial<Record<Language, string>> & { 
   storeShowcaseEyebrow: { fa: "نمای دوکان", prs: "نمای دوکان", ps: "د دوکان لید", en: "Store view", ar: "نظرة على المتجر", fr: "Aperçu du magasin", de: "Ladenansicht", tr: "Mağaza görünümü", es: "Vista de la tienda" },
   storeShowcaseTitle: { fa: "از نزدیک دوکان ما را ببینید", prs: "از نزدیک دوکان ما را ببینید", ps: "زموږ دوکان له نږدې وګورئ", en: "Take a look inside our store", ar: "ألق نظرة داخل متجرنا", fr: "Découvrez notre magasin", de: "Werfen Sie einen Blick in unser Geschäft", tr: "Mağazamıza yakından bakın", es: "Echa un vistazo a nuestra tienda" },
   promoSocialWatchLabel: { fa: "مشاهده ویدیو در شبکه اجتماعی", prs: "مشاهده ویدیو در شبکه اجتماعی", ps: "ویډیو په ټولنیز شبکه کې وګورئ", en: "Watch video on social media", ar: "شاهد الفيديو على وسائل التواصل الاجتماعي", fr: "Voir la vidéo sur les réseaux sociaux", de: "Video in sozialen Medien ansehen", tr: "Videoyu sosyal medyada izle", es: "Ver el video en redes sociales" },
+  okButtonLabel: { fa: "باشه", prs: "باشه", ps: "سمه ده", en: "OK", ar: "حسناً", fr: "OK", de: "OK", tr: "Tamam", es: "OK" },
 
   // ---------- مقایسه کالاها ----------
   comparePageTitle: { fa: "⚖️ مقایسه کالاها", prs: "⚖️ مقایسه کالاها", ps: "⚖️ د توکو پرتله کول", en: "⚖️ Compare Products", ar: "⚖️ مقارنة المنتجات", fr: "⚖️ Comparer les produits", de: "⚖️ Produkte vergleichen", tr: "⚖️ Ürünleri Karşılaştır", es: "⚖️ Comparar Productos" },

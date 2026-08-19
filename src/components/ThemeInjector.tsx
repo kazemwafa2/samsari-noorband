@@ -48,10 +48,27 @@ export default function ThemeInjector() {
 
     // شفافیت گلاس شیشه‌ای: globals.css از --glass-bg به‌صورت rgba ثابت
     // استفاده می‌کند؛ اینجا فقط عدد شفافیت (آلفا) آن جایگزین می‌شود.
-    if (theme.glassOpacity) {
+    // نکته: اگر theme.glassBg مقدار کامل rgba داشته باشد (مثلا از یک
+    // پیش‌فرض «شیشه یخی»)، همان اولویت دارد و جایگزین این محاسبه ساده
+    // می‌شود — چون رنگ گلاس یخی آبی‌روشن است، نه سفید خالص.
+    if (theme.glassBg) {
+      root.style.setProperty("--glass-bg", theme.glassBg);
+    } else if (theme.glassOpacity) {
       root.style.setProperty("--glass-bg", `rgba(255,255,255,${theme.glassOpacity})`);
     } else {
       root.style.removeProperty("--glass-bg");
+    }
+
+    if (theme.glassBorder) {
+      root.style.setProperty("--glass-border", theme.glassBorder);
+    } else {
+      root.style.removeProperty("--glass-border");
+    }
+
+    if (theme.glassBlur) {
+      root.style.setProperty("--glass-blur", theme.glassBlur);
+    } else {
+      root.style.removeProperty("--glass-blur");
     }
   }, [theme, loading]);
 

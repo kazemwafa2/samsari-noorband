@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { logAction } from "@/lib/audit";
 import { ROLES } from "@/lib/auth/roles";
@@ -83,6 +84,11 @@ export default function UsersSetting() {
   return (
     <main className="home-page space-y-6">
       <h1 className="section-title">👥 دسترسی کاربران</h1>
+
+      <p style={{ color: "#6B7280" }}>
+        این صفحه فقط برای ارتقا/لغو سریع نقش «ادمین» است. برای تغییر نقش به فروشنده، مأمور تحویل یا سایر نقش‌ها،
+        از <Link href="/dashboard/users" style={{ textDecoration: "underline" }}>لیست کامل کاربران</Link> استفاده کنید.
+      </p>
 
       <form onSubmit={promote} className="flex">
         <input

@@ -2769,6 +2769,66 @@ label{
   cursor:pointer;
 }
 
+/*========== WELCOME MODAL (جایگزین alert() خام مرورگر) ==========*/
+.welcome-modal{
+  position:relative;
+  width:100%;
+  max-width:420px;
+  padding:28px;
+  border-radius:28px;
+  background:var(--card, #fff);
+  border:1px solid var(--glass-border);
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+[data-theme="dark"] .welcome-modal{
+  background:#151022;
+}
+.welcome-modal-text{
+  white-space:pre-line;
+  line-height:2;
+  font-size:15px;
+}
+
+/*========== GLASS PRESET CARDS (تنظیمات ظاهری) ==========*/
+.glass-preset-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+  gap:14px;
+}
+.glass-preset-card{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  padding:14px;
+  border-radius:18px;
+  border:1px solid var(--glass-border);
+  background:var(--card, #fff);
+  cursor:pointer;
+  text-align:start;
+  transition:.2s;
+}
+.glass-preset-card:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--shadow);
+}
+.glass-preset-swatch{
+  width:100%;
+  height:44px;
+  border-radius:12px;
+}
+.glass-preset-desc{
+  font-size:12px;
+  color:#6B7280;
+}
+.glass-preset-mode{
+  font-size:11px;
+  opacity:.7;
+}
+
 .quick-view-media{
   flex-shrink:0;
   width:260px;

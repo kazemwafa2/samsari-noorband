@@ -83,6 +83,15 @@ export const metadata: Metadata = {
 
   manifest: "/manifest.webmanifest",
 
+  // آیکون تب مرورگر: اگر ادمین از پنل (تنظیمات → برندینگ) لوگو آپلود
+  // کرده باشد، همان نمایش داده می‌شود؛ وگرنه route خودش به favicon.ico
+  // ثابت قبلی برمی‌گردد (src/app/api/favicon/route.ts).
+  icons: {
+    icon: "/api/favicon",
+    shortcut: "/api/favicon",
+    apple: "/api/favicon",
+  },
+
   // hreflang واقعی: چون middleware.ts حالا واقعا /fa /ps /en /ar /fr
   // /de را rewrite می‌کند (نه ۴۰۴)، این آدرس‌ها دیگر جعلی نیستند.
   // دری (prs) پیش‌فرض و بدون پیشوند است، هم برای x-default و هم prs.
