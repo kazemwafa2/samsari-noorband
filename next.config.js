@@ -51,6 +51,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://via.placeholder.com",
+              "media-src 'self' https://*.supabase.co blob:",
               "font-src 'self' data:",
               "connect-src 'self' https://*.supabase.co https://api.groq.com https://payment.zarinpal.com https://ipapi.co https://www.google-analytics.com",
               "frame-ancestors 'self'",
