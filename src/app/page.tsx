@@ -41,6 +41,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { useCompareStore } from "@/store/compare";
 import { getRecentlyViewed } from "@/lib/recentlyViewed";
 import { useSiteSettings } from "@/lib/site-settings";
+import FloralDivider from "@/components/home/FloralDivider";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { t } from "@/lib/i18n/dictionaries";
 import { resolveTranslated } from "@/lib/i18n/resolveContent";
@@ -496,6 +497,8 @@ export default function Home() {
         </Reveal>
       )}
 
+      <FloralDivider seed={1} />
+
       {/*======================
       CATEGORIES
       =======================*/}
@@ -629,6 +632,8 @@ export default function Home() {
           </section>
         </Reveal>
       )}
+
+      <FloralDivider seed={5} />
 
       {/*======================
       NEW ARRIVALS

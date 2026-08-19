@@ -2829,6 +2829,25 @@ label{
   opacity:.7;
 }
 
+/*========== FLORAL DIVIDER (جداکننده گل‌های تزئینی بین بخش‌های صفحه اصلی) ==========*/
+.floral-divider{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin:8px 0;
+  opacity:.85;
+}
+.floral-divider span:not(.floral-divider-emoji){
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg, transparent, var(--glass-border), transparent);
+}
+.floral-divider-emoji{
+  font-size:15px;
+  letter-spacing:2px;
+  flex-shrink:0;
+}
+
 .quick-view-media{
   flex-shrink:0;
   width:260px;

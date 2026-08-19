@@ -87,7 +87,7 @@ export default function OrderSuccessPage() {
 
         <h2 className="section-title">{t("orderPlacedSuccessTitle", language)}</h2>
 
-        <p>{t("thanksForPurchaseText", language)}</p>
+        <p>{t("thanksForPurchaseText", language)} 🌷💖</p>
 
         {order?.payment_method === "online" && paymentResult === "ok" && (
           <p style={{ color: "#22c55e" }}>{t("paymentConfirmedText", language)}</p>
