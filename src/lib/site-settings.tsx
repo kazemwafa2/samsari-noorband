@@ -41,6 +41,9 @@ interface SiteSettingsValue {
   promoVideoUrl: string | null;
   promoVideoEnabled: boolean;
   promoSocialLink: string | null;
+  shippingFlatRate: number;
+  shippingFreeThreshold: number;
+  storeVideoUrl: string | null;
   theme: ThemeSettings;
   loading: boolean;
   refresh: () => void;
@@ -62,6 +65,9 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
   const [promoVideoUrl, setPromoVideoUrl] = useState<string | null>(null);
   const [promoVideoEnabled, setPromoVideoEnabled] = useState(false);
   const [promoSocialLink, setPromoSocialLink] = useState<string | null>(null);
+  const [shippingFlatRate, setShippingFlatRate] = useState(200);
+  const [shippingFreeThreshold, setShippingFreeThreshold] = useState(5000);
+  const [storeVideoUrl, setStoreVideoUrl] = useState<string | null>(null);
   const [theme, setTheme] = useState<ThemeSettings>({});
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +77,7 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     const { data } = await supabase
       .from("site_settings")
       .select(
-        "logo_url, store_image_day_url, store_image_night_url, store_gallery_urls, hero_image_url, social_facebook, social_instagram, social_whatsapp, invoice_barcode_platforms, promo_video_url, promo_video_enabled, promo_social_link, theme"
+        "logo_url, store_image_day_url, store_image_night_url, store_gallery_urls, store_video_url, hero_image_url, social_facebook, social_instagram, social_whatsapp, invoice_barcode_platforms, promo_video_url, promo_video_enabled, promo_social_link, shipping_flat_rate, shipping_free_threshold, theme"
       )
       .eq("id", 1)
       .single();
@@ -90,6 +96,9 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     setPromoVideoUrl(data?.promo_video_url || null);
     setPromoVideoEnabled(!!data?.promo_video_enabled);
     setPromoSocialLink(data?.promo_social_link || null);
+    setShippingFlatRate(Number(data?.shipping_flat_rate ?? 200));
+    setShippingFreeThreshold(Number(data?.shipping_free_threshold ?? 5000));
+    setStoreVideoUrl(data?.store_video_url || null);
     setTheme(data?.theme && typeof data.theme === "object" ? data.theme : {});
     setLoading(false);
   }
@@ -113,6 +122,9 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         promoVideoUrl,
         promoVideoEnabled,
         promoSocialLink,
+        shippingFlatRate,
+        shippingFreeThreshold,
+        storeVideoUrl,
         theme,
         loading,
         refresh: load,

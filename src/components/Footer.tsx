@@ -23,6 +23,7 @@ export default function Footer() {
     storeImageDayUrl,
     storeImageNightUrl,
     storeGalleryUrls,
+    storeVideoUrl,
     socialFacebook,
     socialInstagram,
     socialWhatsapp,
@@ -93,7 +94,7 @@ export default function Footer() {
       </div>
 
       {/* ================= STORE INFO ================= */}
-      <div className="footer-pro-store">
+      <div className={`footer-pro-store${storeVideoUrl ? " footer-pro-store-with-video" : ""}`}>
 
         <div className="footer-pro-store-image">
           {storeImage && (
@@ -107,6 +108,22 @@ export default function Footer() {
 
           <div className="footer-pro-image-overlay" />
         </div>
+
+        {/* دقیقا مطابق درخواست: «کنار عکس آدرس دوکان یک جای ویدیویی
+            دوکان درست کن» — فقط وقتی از پنل برندینگ ویدیو آپلود/تنظیم
+            شده باشد نمایش داده می‌شود، وگرنه چیدمان قبلی (فقط عکس)
+            دست‌نخورده می‌ماند. */}
+        {storeVideoUrl && (
+          <div className="footer-pro-store-video">
+            <video
+              src={storeVideoUrl}
+              controls
+              playsInline
+              preload="metadata"
+              className="footer-store-video-el"
+            />
+          </div>
+        )}
 
         <div className="footer-pro-location-grid">
 

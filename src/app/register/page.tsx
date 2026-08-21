@@ -114,6 +114,10 @@ export default function RegisterPage() {
   useGuestOnly();
 
   const [loading, setLoading] = useState(false);
+  // نکته: بعد از ثبت‌نام موفق (وقتی ایمیل تایید لازم است)، به‌جای
+  // ریدایرکت فوری به /login، این صفحه‌ی راهنما نشان داده می‌شود
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showPassword2, setShowPassword2] = useState(false);
 
@@ -548,20 +552,43 @@ export default function RegisterPage() {
 
     setLoading(false);
 
-    toast.success(
-      getMessage("REGISTER_MESSAGE", language)
-    );
-
     if (data.session) {
+      toast.success(
+        getMessage("REGISTER_MESSAGE", language)
+      );
       router.push("/");
       router.refresh();
     } else {
-      toast.info(
-        "لطفاً ایمیل خود را بررسی و حساب خود را تأیید کنید."
-      );
-
-      router.push("/login");
+      // نکته اصلاح‌شده: قبلا فقط یک toast چندثانیه‌ای («لطفاً ایمیل
+      // خود را بررسی و حساب خود را تأیید کنید») نشان داده می‌شد و
+      // بلافاصله کاربر به /login می‌رفت — نه اشاره‌ای به پوشه Spam، نه
+      // راهی برای ارسال دوباره ایمیل. حالا یک صفحه‌ی راهنمای واضح و
+      // ماندگار نشان داده می‌شود.
+      setRegisteredEmail(email.trim());
     }
+  }
+
+  async function resendConfirmation() {
+    if (!registeredEmail) return;
+
+    setResending(true);
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: registeredEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    setResending(false);
+
+    if (error) {
+      toast.error("ارسال دوباره ایمیل با خطا مواجه شد: " + error.message);
+      return;
+    }
+
+    toast.success("ایمیل تایید دوباره ارسال شد.");
   }
 
   function suggestPassword() {
@@ -576,6 +603,31 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen center relative overflow-hidden">
+      {registeredEmail && (
+        <div className="quick-view-overlay">
+          <div className="welcome-modal">
+            <p style={{ fontSize: 40 }}>📧</p>
+            <h2 style={{ fontWeight: 800, fontSize: 19 }}>ایمیل تایید برای شما ارسال شد</h2>
+            <p className="welcome-modal-text">
+              یک ایمیل تایید به آدرس{" "}
+              <strong style={{ direction: "ltr", display: "inline-block" }}>{registeredEmail}</strong>{" "}
+              فرستاده شد. لطفاً صندوق ورودی ایمیل خود را باز کنید و روی لینک تایید بزنید.
+              {"\n\n"}
+              ⚠️ اگر ایمیل را در صندوق اصلی ندیدید، حتماً پوشه{" "}
+              <strong>Spam / Junk (هرزنامه)</strong> را هم بررسی کنید — خیلی وقت‌ها ایمیل تایید همان‌جا می‌رود.
+            </p>
+
+            <button className="primary-btn" onClick={resendConfirmation} disabled={resending}>
+              {resending ? "در حال ارسال..." : "📩 ارسال دوباره ایمیل تایید"}
+            </button>
+
+            <button className="outline-btn" onClick={() => router.push("/login")}>
+              رفتن به صفحه ورود
+            </button>
+          </div>
+        </div>
+      )}
+
       <div
         className="auth-page-decor"
         aria-hidden="true"

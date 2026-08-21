@@ -31,6 +31,7 @@ export default function BrandingSettings() {
   const [nightUrl, setNightUrl] = useState("");
   const [heroUrl, setHeroUrl] = useState("");
   const [gallery, setGallery] = useState<string[]>([]);
+  const [storeVideoUrl, setStoreVideoUrl] = useState("");
   const [socialFacebook, setSocialFacebook] = useState("");
   const [socialInstagram, setSocialInstagram] = useState("");
   const [socialWhatsapp, setSocialWhatsapp] = useState("");
@@ -38,6 +39,8 @@ export default function BrandingSettings() {
   const [promoVideoUrl, setPromoVideoUrl] = useState("");
   const [promoVideoEnabled, setPromoVideoEnabled] = useState(false);
   const [promoSocialLink, setPromoSocialLink] = useState("");
+  const [shippingFlatRate, setShippingFlatRate] = useState("200");
+  const [shippingFreeThreshold, setShippingFreeThreshold] = useState("5000");
   // تشخیص نوع منبع فعلی برای نمایش دکمه‌ی درست انتخاب‌شده هنگام بارگذاری
   const [promoSource, setPromoSource] = useState<"upload" | "link" | "social">("link");
   const [loading, setLoading] = useState(true);
@@ -51,7 +54,7 @@ export default function BrandingSettings() {
     const { data } = await supabase
       .from("site_settings")
       .select(
-        "logo_url, store_image_day_url, store_image_night_url, hero_image_url, store_gallery_urls, social_facebook, social_instagram, social_whatsapp, invoice_barcode_platforms, promo_video_url, promo_video_enabled, promo_social_link"
+        "logo_url, store_image_day_url, store_image_night_url, hero_image_url, store_gallery_urls, store_video_url, social_facebook, social_instagram, social_whatsapp, invoice_barcode_platforms, promo_video_url, promo_video_enabled, promo_social_link, shipping_flat_rate, shipping_free_threshold"
       )
       .eq("id", 1)
       .single();
@@ -62,6 +65,7 @@ export default function BrandingSettings() {
       setNightUrl(data.store_image_night_url || "");
       setHeroUrl(data.hero_image_url || "");
       setGallery(Array.isArray(data.store_gallery_urls) ? data.store_gallery_urls : []);
+      setStoreVideoUrl(data.store_video_url || "");
       setSocialFacebook(data.social_facebook || "");
       setSocialInstagram(data.social_instagram || "");
       setSocialWhatsapp(data.social_whatsapp || "");
@@ -71,6 +75,8 @@ export default function BrandingSettings() {
       setPromoVideoUrl(data.promo_video_url || "");
       setPromoVideoEnabled(!!data.promo_video_enabled);
       setPromoSocialLink(data.promo_social_link || "");
+      setShippingFlatRate(String(data.shipping_flat_rate ?? 200));
+      setShippingFreeThreshold(String(data.shipping_free_threshold ?? 5000));
       // اگر قبلا لینک شبکه اجتماعی تنظیم شده، همان تب باز شود؛ وگرنه
       // اگر لینک ویدیو در باکت videos خودمان بود یعنی آپلودی است
       if (data.promo_social_link) {
@@ -113,6 +119,7 @@ export default function BrandingSettings() {
       store_image_night_url: nightUrl || null,
       hero_image_url: heroUrl || null,
       store_gallery_urls: gallery.filter(Boolean),
+      store_video_url: storeVideoUrl || null,
       social_facebook: socialFacebook || null,
       social_instagram: socialInstagram || null,
       social_whatsapp: socialWhatsapp || null,
@@ -120,6 +127,8 @@ export default function BrandingSettings() {
       promo_video_url: promoSource === "social" ? null : (promoVideoUrl || null),
       promo_video_enabled: promoVideoEnabled,
       promo_social_link: promoSource === "social" ? (promoSocialLink || null) : null,
+      shipping_flat_rate: Number(shippingFlatRate) || 0,
+      shipping_free_threshold: Number(shippingFreeThreshold) || 0,
       updated_at: new Date().toISOString(),
     });
 
@@ -193,6 +202,14 @@ export default function BrandingSettings() {
         >
           <Plus size={16} /> افزودن عکس دیگر
         </button>
+      </div>
+
+      <div className="glass-card space-y-4">
+        <h2>🎥 ویدیوی معرفی دوکان</h2>
+        <p style={{ color: "#6B7280" }}>
+          یک ویدیوی کوتاه از داخل دوکان — دقیقاً کنار عکس آدرس دوکان در فوتر سایت نمایش داده می‌شود.
+        </p>
+        <VideoUploader value={storeVideoUrl} onUploaded={setStoreVideoUrl} folder="store" />
       </div>
 
       <div className="glass-card space-y-4">
@@ -304,6 +321,30 @@ export default function BrandingSettings() {
             />
           </>
         )}
+      </div>
+
+      <div className="glass-card space-y-4">
+        <h2>🚚 هزینه ارسال</h2>
+        <p style={{ color: "#6B7280" }}>
+          قبلا هزینه ارسال در کد ثابت بود (۲۰۰ افغانی، رایگان بالای ۵۰۰۰ افغانی). حالا از همین‌جا قابل تغییر است
+          و روی فاکتور هم به‌صورت یک ردیف جدا (نه فقط داخل جمع کل) نمایش داده می‌شود.
+        </p>
+
+        <label>هزینه ارسال ثابت (افغانی)</label>
+        <input
+          type="number"
+          min="0"
+          value={shippingFlatRate}
+          onChange={(e) => setShippingFlatRate(e.target.value)}
+        />
+
+        <label>ارسال رایگان برای خریدهای بالای (افغانی)</label>
+        <input
+          type="number"
+          min="0"
+          value={shippingFreeThreshold}
+          onChange={(e) => setShippingFreeThreshold(e.target.value)}
+        />
       </div>
 
       <button className="primary-btn" onClick={save} disabled={saving}>

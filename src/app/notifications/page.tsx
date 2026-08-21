@@ -81,6 +81,8 @@ export default function NotificationsPage() {
   async function markAsRead(id: number) {
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+    // شمارنده‌ی زنگ در Navbar را هم بلافاصله به‌روز می‌کند
+    window.dispatchEvent(new CustomEvent("noorband:notification-read"));
   }
 
   return (

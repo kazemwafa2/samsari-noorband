@@ -51,8 +51,18 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://via.placeholder.com",
-              "media-src 'self' https://*.supabase.co blob:",
               "font-src 'self' data:",
+              // نکته اصلاح‌شده: قبلا هیچ media-src تعریف نشده بود، یعنی
+              // به‌طور پیش‌فرض روی default-src 'self' می‌افتاد — مرورگر
+              // اجازه پخش فایل ویدیوی آپلودشده در Supabase Storage
+              // (دامنه‌ی خارجی) را نمی‌داد، حتی با اینکه خود فایل و
+              // لینک عمومی‌اش کاملا سالم بودند. همین باعث می‌شد ویدیوی
+              // تبلیغاتی همیشه با پلیر سیاه/۰:۰۰ نمایش داده شود.
+              "media-src 'self' https://*.supabase.co blob:",
+              // نکته: iframe یوتیوب/آپارات برای ویدیوی تبلیغاتی هم به
+              // frame-src نیاز دارد؛ بدون این خط همان مشکل CSP بالا
+              // برای این دو منبع هم پیش می‌آمد.
+              "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.aparat.com",
               "connect-src 'self' https://*.supabase.co https://api.groq.com https://payment.zarinpal.com https://ipapi.co https://www.google-analytics.com",
               "frame-ancestors 'self'",
               "base-uri 'self'",

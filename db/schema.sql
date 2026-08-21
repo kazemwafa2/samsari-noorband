@@ -2053,3 +2053,15 @@ create policy "orders_delete_admin_only" on orders
   for delete using (
     exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','super_admin'))
   );
+
+-- هزینه ارسال: قبلا در کد چک‌اوت به‌صورت ثابت (۲۰۰ افغانی، رایگان بالای
+-- ۵۰۰۰) هارد‌کد بود و روی فاکتور هم اصلا به‌عنوان یک ردیف جدا نمایش
+-- داده نمی‌شد — یعنی مشتری می‌دید جمع کل از قیمت محصولات بیشتر است ولی
+-- نمی‌فهمید چرا. حالا این دو مقدار از پنل مدیریت قابل تنظیم است.
+alter table site_settings add column if not exists shipping_flat_rate numeric(14,2) not null default 200;
+alter table site_settings add column if not exists shipping_free_threshold numeric(14,2) not null default 5000;
+
+-- ویدیوی معرفی دوکان — دقیقا کنار عکس آدرس دوکان در فوتر نمایش داده
+-- می‌شود (site_settings.store_gallery_urls برای عکس‌ها بود؛ این یکی
+-- مخصوص یک ویدیوی کوتاه از داخل دوکان است)
+alter table site_settings add column if not exists store_video_url text;

@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useCurrency } from "@/lib/currency";
 import { useUserRole } from "@/hooks/use-user-role";
 import { redirectUser } from "@/lib/redirect-user";
+import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 
 // نسخه قبلی این کامپوننت فقط چند ایموجی خام (🏠 🛍 🔎 🛒 🔔 👤) بدون
 // لوگو، بدون جستجو و بدون اتصال واقعی به سبد خرید/علاقه‌مندی‌ها بود.
@@ -40,6 +41,7 @@ export default function Navbar() {
   // استفاده نمی‌شد)، ادمین/سوپرادمین/فروشنده به /dashboard و مشتری عادی
   // به /site/profile هدایت می‌شود.
   const { role } = useUserRole();
+  const { unreadCount } = useUnreadNotifications();
   const profileHref = role ? redirectUser(role) : "/site/profile";
 
   // ---------------------------------------------------------------------
@@ -181,6 +183,7 @@ export default function Navbar() {
 
           <Link href="/notifications" className="navbar-icon-btn" aria-label={t("notifications", language)}>
             <Bell size={19} />
+            {unreadCount > 0 && <span className="navbar-badge">{unreadCount}</span>}
           </Link>
 
           <Link href="/site/wishlist" className="navbar-icon-btn" aria-label={t("wishlist", language)}>

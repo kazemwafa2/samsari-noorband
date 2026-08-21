@@ -44,6 +44,7 @@ formatPrice
 
 import { useLanguage } from '@/lib/i18n/LanguageProvider'
 import { t } from '@/lib/i18n/dictionaries'
+import { useSiteSettings } from '@/lib/site-settings'
 
 
 function getCheckoutSchema(language: string){
@@ -181,6 +182,12 @@ const [
 shippingPrice,
 setShippingPrice
 ] = useState(0)
+
+// نکته اصلاح‌شده: قبلا هزینه ارسال (۲۰۰ افغانی، رایگان بالای ۵۰۰۰) در
+// همین فایل هارد‌کد بود. حالا از پنل مدیریت (تنظیمات → برندینگ) خوانده
+// می‌شود تا ادمین بتواند بدون نیاز به تغییر کد، هزینه ارسال یا آستانه
+// ارسال رایگان را عوض کند.
+const { shippingFlatRate, shippingFreeThreshold } = useSiteSettings()
 
 
 const [
@@ -444,7 +451,7 @@ getSubtotal()
 
 >=
 
-5000
+shippingFreeThreshold
 
 ){
 
@@ -452,14 +459,16 @@ setShippingPrice(0)
 
 }else{
 
-setShippingPrice(200)
+setShippingPrice(shippingFlatRate)
 
 }
 
 
 },[
 items,
-getSubtotal
+getSubtotal,
+shippingFlatRate,
+shippingFreeThreshold
 ])
 
 

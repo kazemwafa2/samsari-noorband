@@ -239,9 +239,28 @@ export default function Invoice() {
           </tbody>
         </table>
 
-        <div className="invoice-total-row">
-          <span>{t("invoiceTotalLabel", language)}</span>
-          <strong>{format(Number(order.total_amount))}</strong>
+        <div className="invoice-totals-block">
+          {/* نکته اصلاح‌شده: قبلا فقط جمع نهایی نشان داده می‌شد و اگر
+              هزینه ارسال داشت (order.shipping_cost)، مشتری نمی‌فهمید
+              چرا جمع کل از قیمت محصولات بیشتر است. حالا جمع محصولات و
+              هزینه ارسال هرکدام جدا نمایش داده می‌شوند. */}
+          {order.shipping_cost > 0 && (
+            <>
+              <div className="invoice-subtotal-row">
+                <span>{t("invoiceSubtotalLabel", language)}</span>
+                <span>{format(Number(order.subtotal ?? order.total_amount - order.shipping_cost))}</span>
+              </div>
+              <div className="invoice-subtotal-row">
+                <span>{t("invoiceShippingCostLabel", language)}</span>
+                <span>{format(Number(order.shipping_cost))}</span>
+              </div>
+            </>
+          )}
+
+          <div className="invoice-total-row">
+            <span>{t("invoiceTotalLabel", language)}</span>
+            <strong>{format(Number(order.total_amount))}</strong>
+          </div>
         </div>
 
         <p className="invoice-thanks">{t("invoiceThanksMessage", language)}</p>
@@ -284,6 +303,12 @@ export default function Invoice() {
           </p>
         ))}
         <hr />
+        {order.shipping_cost > 0 && (
+          <>
+            <p>{t("invoiceSubtotalLabel", language)}: {format(Number(order.subtotal ?? order.total_amount - order.shipping_cost))}</p>
+            <p>{t("invoiceShippingCostLabel", language)}: {format(Number(order.shipping_cost))}</p>
+          </>
+        )}
         <p>{t("invoiceGrandTotalLabel", language).replace("{amount}", format(Number(order.total_amount)))}</p>
 
         {activeBarcodes.length > 0 && (
